@@ -6,25 +6,37 @@ from openai import OpenAI
 from qdrant_client import QdrantClient
 
 from app.config import Settings, get_settings
-from app.data_access.users import get_user
+from app.data_access.users import UserProfile, get_user, list_users
+from app.rag.demo import HashingEmbedder, PromptEchoGenerator
 from app.rag.embeddings import Embedder
 from app.rag.generator import Generator
+from app.rag.ingestion import ingest_protocols
 from app.rag.prompt import build_messages
 from app.rag.vector_store import ProtocolStore
-from app.schemas import AskRequest, AskResponse, Source
+from app.schemas import AskRequest, AskResponse, Source, UserSummary
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set. Copy .env.example to .env and add your key.")
 
-    openai_client = OpenAI(api_key=settings.openai_api_key)
-    qdrant_client = QdrantClient(path=settings.qdrant_path)
-    app.state.embedder = Embedder(openai_client, settings.embedding_model)
-    app.state.generator = Generator(openai_client, settings.chat_model)
-    app.state.store = ProtocolStore(qdrant_client, settings.qdrant_collection)
+    if settings.demo_mode:
+        qdrant_client = QdrantClient(":memory:")
+        app.state.embedder = HashingEmbedder()
+        app.state.generator = PromptEchoGenerator()
+        app.state.store = ProtocolStore(qdrant_client, settings.qdrant_collection)
+        ingest_protocols(app.state.embedder, app.state.store)
+    else:
+        if not settings.openai_api_key:
+            raise RuntimeError(
+                "OPENAI_API_KEY is not set. Add it to .env, or set DEMO_MODE=true to run offline."
+            )
+        openai_client = OpenAI(api_key=settings.openai_api_key)
+        qdrant_client = QdrantClient(path=settings.qdrant_path)
+        app.state.embedder = Embedder(openai_client, settings.embedding_model)
+        app.state.generator = Generator(openai_client, settings.chat_model)
+        app.state.store = ProtocolStore(qdrant_client, settings.qdrant_collection)
+
     yield
     qdrant_client.close()
 
@@ -47,6 +59,19 @@ def get_store(request: Request) -> ProtocolStore:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/users", response_model=list[UserSummary])
+def users() -> list[UserProfile]:
+    return list_users()
+
+
+@app.get("/users/{user_id}", response_model=UserProfile)
+def user_detail(user_id: str) -> UserProfile:
+    user = get_user(user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    return user
 
 
 @app.post("/ask", response_model=AskResponse)

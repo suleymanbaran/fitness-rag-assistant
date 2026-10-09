@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    demo_mode: bool = False
     openai_api_key: str = ""
     chat_model: str = "gpt-4o-mini"
     embedding_model: str = "text-embedding-3-small"

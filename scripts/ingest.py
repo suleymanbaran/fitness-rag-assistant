@@ -10,17 +10,9 @@ from openai import OpenAI
 from qdrant_client import QdrantClient
 
 from app.config import get_settings
-from app.data_access.protocols import load_protocols
 from app.rag.embeddings import Embedder
+from app.rag.ingestion import ingest_protocols
 from app.rag.vector_store import ProtocolStore
-
-
-def ingest(embedder: Embedder, store: ProtocolStore) -> int:
-    protocols = load_protocols()
-    vectors = embedder.embed([f"{p.title}\n{p.text}" for p in protocols])
-    store.recreate(vector_size=len(vectors[0]))
-    store.upsert(protocols, vectors)
-    return store.count()
 
 
 def main() -> None:
@@ -35,7 +27,7 @@ def main() -> None:
     store = ProtocolStore(client, settings.qdrant_collection)
 
     try:
-        count = ingest(embedder, store)
+        count = ingest_protocols(embedder, store)
         print(f"Ingested {count} protocols into '{settings.qdrant_collection}' at {settings.qdrant_path}\n")
 
         hits = store.search(embedder.embed_one(args.query), top_k=settings.rag_top_k, category=args.category)

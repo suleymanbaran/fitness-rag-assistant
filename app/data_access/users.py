@@ -34,3 +34,7 @@ def _load_users() -> dict[str, UserProfile]:
 
 def get_user(user_id: str) -> UserProfile | None:
     return _load_users().get(user_id)
+
+
+def list_users() -> list[UserProfile]:
+    return list(_load_users().values())

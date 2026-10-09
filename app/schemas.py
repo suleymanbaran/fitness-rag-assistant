@@ -14,6 +14,12 @@ class AskRequest(BaseModel):
     category: Category | None = Field(None, description="Restrict retrieval to one protocol category")
 
 
+class UserSummary(BaseModel):
+    user_id: str
+    name: str
+    goal: str
+
+
 class Source(BaseModel):
     protocol_id: str
     title: str

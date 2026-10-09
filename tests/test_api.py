@@ -4,10 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
+from app.config import get_settings
 from app.main import app, get_embedder, get_generator, get_store
+from app.rag.demo import PromptEchoGenerator
 from app.rag.generator import Generator
+from app.rag.ingestion import ingest_protocols
 from app.rag.vector_store import ProtocolStore
-from scripts.ingest import ingest
 from tests.fakes import FakeEmbedder, FakeGenerator
 
 
@@ -16,7 +18,7 @@ def fakes():
     embedder = FakeEmbedder()
     generator = FakeGenerator()
     store = ProtocolStore(QdrantClient(":memory:"), "protocols")
-    ingest(embedder, store)
+    ingest_protocols(embedder, store)
 
     app.dependency_overrides[get_embedder] = lambda: embedder
     app.dependency_overrides[get_generator] = lambda: generator
@@ -78,6 +80,39 @@ def test_empty_knowledge_base_returns_503(fakes):
     app.dependency_overrides[get_store] = lambda: ProtocolStore(QdrantClient(":memory:"), "protocols")
     r = fakes.client.post("/ask", json={"user_id": "u1", "question": "Hello coach"})
     assert r.status_code == 503
+
+
+def test_users_list_and_detail(fakes):
+    users = fakes.client.get("/users").json()
+    assert {u["user_id"] for u in users} == {"u1", "u2"}
+    assert set(users[0]) == {"user_id", "name", "goal"}
+
+    detail = fakes.client.get("/users/u1").json()
+    assert detail["name"] == "Ali"
+    assert len(detail["days"]) == 7
+    assert fakes.client.get("/users/nobody").status_code == 404
+
+
+def test_demo_mode_runs_full_app_without_openai(monkeypatch):
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    get_settings.cache_clear()
+    try:
+        with TestClient(app) as client:  # `with` runs the lifespan, so startup is tested too
+            r = client.post("/ask", json={"user_id": "u1", "question": "My HRV dropped, should I squat?"})
+    finally:
+        get_settings.cache_clear()
+
+    assert r.status_code == 200
+    assert r.json()["answer"].startswith("**Demo mode:**")
+    assert "HRV 55.0 ms vs 66.5 ms" in r.json()["answer"]
+    assert len(r.json()["sources"]) == 3
+
+
+def test_prompt_echo_generator_shows_last_message():
+    answer = PromptEchoGenerator().generate([{"role": "system", "content": "rules"}, {"role": "user", "content": "data"}])
+    assert "```text\ndata\n```" in answer
+    assert "rules" not in answer
 
 
 def test_generator_reads_message_content_from_openai_response():

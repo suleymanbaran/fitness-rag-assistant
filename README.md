@@ -18,11 +18,26 @@ user_id ──► exact lookup in users.json ──────┼─► prompt 
 | `app/rag/vector_store.py` | Qdrant collection: recreate, upsert, filtered search |
 | `app/rag/prompt.py` | System rules, computed baselines, retrieved protocols |
 | `app/rag/generator.py` | Chat completion call |
-| `app/main.py` | FastAPI app, lifespan, dependencies, `POST /ask` |
+| `app/rag/demo.py` | Offline stand-ins for OpenAI (demo mode and tests) |
+| `app/main.py` | FastAPI app, lifespan, dependencies, `POST /ask`, `GET /users` |
+| `ui/streamlit_app.py` | Chat UI with metrics and charts; calls the API over HTTP |
 | `scripts/cosine_playground.py` | Brute-force cosine search in NumPy |
 | `scripts/ingest.py` | Embed protocols and load them into Qdrant |
 
-## Run
+## Try it without an OpenAI key (demo mode)
+
+Two terminals:
+
+```bash
+source .venv/bin/activate
+DEMO_MODE=true uvicorn app.main:app --reload     # terminal 1: the API
+streamlit run ui/streamlit_app.py                # terminal 2: the chat UI
+```
+
+Open http://localhost:8501. Demo mode uses a word-hashing stand-in for embeddings and shows the
+prompt that would be sent to GPT instead of a real answer. Nothing is sent to OpenAI.
+
+## Run with OpenAI
 
 ```bash
 cp .env.example .env   # set OPENAI_API_KEY
@@ -32,9 +47,10 @@ pip install -r requirements.txt
 python -m scripts.cosine_playground "my nervous system feels fried before leg day"
 python -m scripts.ingest            # run while the server is stopped
 uvicorn app.main:app --reload
+streamlit run ui/streamlit_app.py   # in a second terminal
 ```
 
-Docs: http://127.0.0.1:8000/docs
+API docs: http://127.0.0.1:8000/docs
 
 ```bash
 curl -X POST localhost:8000/ask -H 'Content-Type: application/json' \
