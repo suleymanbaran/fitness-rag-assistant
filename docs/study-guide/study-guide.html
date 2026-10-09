@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Applied AI Engineer Study Guide</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-center { content: counter(page); font: 9pt -apple-system, Helvetica, sans-serif; color: #888; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.5pt; line-height: 1.5; color: #1d1d1f; margin: 0;
+  }
+  h1 { font-size: 22pt; margin: 0 0 6pt; color: #0b3d91; }
+  h2 { font-size: 13.5pt; margin: 16pt 0 6pt; color: #0b3d91; border-bottom: 1px solid #d6dde8; padding-bottom: 3pt; }
+  h3 { font-size: 11.5pt; margin: 12pt 0 4pt; }
+  p { margin: 4pt 0 7pt; }
+  ul, ol { margin: 3pt 0 8pt; padding-left: 18pt; }
+  li { margin: 2pt 0; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; background: #f2f4f7; padding: 0 3px; border-radius: 3px; }
+  pre {
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.6pt; line-height: 1.4;
+    background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 5px; padding: 7pt 9pt;
+    white-space: pre-wrap; break-inside: avoid; margin: 5pt 0 9pt;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  table { border-collapse: collapse; width: 100%; margin: 5pt 0 10pt; font-size: 9.5pt; break-inside: avoid; }
+  th, td { border: 1px solid #d6dde8; padding: 3pt 6pt; text-align: left; vertical-align: top; }
+  th { background: #eef2f8; }
+  .chapter { break-before: page; }
+  .core { display: inline-block; font-size: 7.5pt; font-weight: 700; letter-spacing: .04em; color: #fff; background: #c2410c; border-radius: 3px; padding: 1px 5px; vertical-align: middle; margin-left: 4px; }
+  .box { border-left: 4px solid #0b3d91; background: #f3f6fb; padding: 6pt 10pt; margin: 7pt 0 10pt; break-inside: avoid; }
+  .tip { border-left-color: #15803d; background: #f0f8f2; }
+  .warn { border-left-color: #c2410c; background: #fdf4ee; }
+  .box p:first-child { margin-top: 0; } .box p:last-child { margin-bottom: 0; }
+  .label { font-weight: 700; }
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover h1 { font-size: 30pt; }
+  .cover .sub { font-size: 14pt; color: #444; margin-bottom: 24pt; }
+  .toc ol { font-size: 11pt; line-height: 1.8; }
+  .toc a { color: #1d1d1f; text-decoration: none; }
+  .qa dt { font-weight: 700; margin-top: 7pt; break-after: avoid; }
+  .qa dd { margin: 2pt 0 0 0; padding-left: 12pt; border-left: 2px solid #d6dde8; break-inside: avoid; }
+  .flow { font-family: "SF Mono", Menlo, monospace; font-size: 8.8pt; background: #fff; border: 1px dashed #9aa7bd; padding: 8pt; border-radius: 5px; white-space: pre; break-inside: avoid; margin: 6pt 0 10pt; }
+  .check li { list-style: none; margin-left: -14pt; }
+  .check li::before { content: "\2610  "; }
+</style>
+</head>
+<body>
+
+<!-- ============================== COVER ============================== -->
+<section class="cover">
+  <h1>Applied AI Engineer<br>Study Guide</h1>
+  <div class="sub">APIs, FastAPI, SQL, Vector Databases, RAG, LLMs and System Design,<br>learned by building a RAG-based AI Fitness Coach</div>
+  <p>Built for: landing a Tier-1 Applied AI / Forward Deployed AI Engineering internship.</p>
+  <p>How to read the tags: sections marked <span class="core">CORE</span> are things you must be able to recall instantly in an interview. Everything else is "know it exists and where to look it up".</p>
+  <p style="color:#888;margin-top:30pt">Version 1 - October 2026</p>
+</section>
+
+<!-- ============================== TOC ============================== -->
+<section class="chapter toc">
+  <h1>Contents</h1>
+  <ol>
+    <li><a href="#learn">How to learn this permanently</a></li>
+    <li><a href="#bigpicture">The big picture: training vs RAG, and our roadmap</a></li>
+    <li><a href="#http">HTTP fundamentals</a></li>
+    <li><a href="#rest">REST API design</a></li>
+    <li><a href="#fastapi">FastAPI</a></li>
+    <li><a href="#auth">Authentication, authorization and API security</a></li>
+    <li><a href="#consume">Consuming external APIs (the core FDE skill)</a></li>
+    <li><a href="#python">Python essentials for backend work</a></li>
+    <li><a href="#sql">SQL and relational databases</a></li>
+    <li><a href="#vectors">Embeddings and vector databases</a></li>
+    <li><a href="#rag">The RAG pipeline and how to evaluate it</a></li>
+    <li><a href="#llm">LLMs and LLM APIs</a></li>
+    <li><a href="#design">System design for AI applications</a></li>
+    <li><a href="#fde">What makes a great Forward Deployed Engineer</a></li>
+    <li><a href="#qbank">Interview question bank with answers</a></li>
+    <li><a href="#checklists">Checklists and debugging toolkit</a></li>
+  </ol>
+</section>
+
+<!-- ============================== 1 LEARN ============================== -->
+<section class="chapter" id="learn">
+  <h1>1. How to learn this permanently</h1>
+  <p>Forgetting is normal: you lose most new information within a day or two unless you actively bring it back. Rereading this guide will <em>feel</em> productive but barely helps. These techniques actually work, ordered by impact.</p>
+
+  <h2>The five techniques</h2>
+  <ol>
+    <li><span class="label">Retrieval practice.</span> Close the guide and write or say everything you remember about a topic, then check what you missed. Recalling strengthens memory; rereading only creates familiarity.</li>
+    <li><span class="label">Spaced repetition.</span> Review at growing intervals: 1 day, 3 days, 1 week, 2 weeks, 1 month. Use Anki (free) and write the cards yourself, in your own words, as questions.</li>
+    <li><span class="label">Build it.</span> You remember what you <em>did</em>. Tie every concept to a moment in the project. You type the code; the mentor reviews it.</li>
+    <li><span class="label">Feynman technique.</span> Explain a concept in plain language (Turkish or English) to a non-programmer. Where you stall or use jargon, you have a gap.</li>
+    <li><span class="label">Interleaving.</span> Mix topics when practicing (one HTTP question, then a RAG one, then SQL). Interviews ask in random order.</li>
+  </ol>
+
+  <h2>A realistic routine</h2>
+  <table>
+    <tr><th>When</th><th>What</th><th>Time</th></tr>
+    <tr><td>Daily</td><td>Anki reviews</td><td>10-15 min</td></tr>
+    <tr><td>Each build session</td><td>Write one step yourself, get it reviewed, add 3-5 sentences to <code>LEARNING_LOG.md</code></td><td>45-90 min</td></tr>
+    <tr><td>End of each step</td><td>Answer that topic's questions from chapter 15 out loud</td><td>5 min</td></tr>
+    <tr><td>Weekly</td><td>Draw the whole system from memory and explain it</td><td>15 min</td></tr>
+  </table>
+
+  <div class="box tip"><p><span class="label">Good flashcard example.</span> Front: "401 vs 403?" Back: "401 = not authenticated (who are you?). 403 = authenticated but not allowed." Small, one idea, phrased as a question.</p></div>
+</section>
+
+<!-- ============================== 2 BIG PICTURE ============================== -->
+<section class="chapter" id="bigpicture">
+  <h1>2. The big picture</h1>
+
+  <h2>Training a model vs providing context with RAG <span class="core">CORE</span></h2>
+  <table>
+    <tr><th></th><th>Training / fine-tuning</th><th>RAG (Retrieval-Augmented Generation)</th></tr>
+    <tr><td>What changes</td><td>The model's weights</td><td>Nothing in the model; the prompt gets extra context at request time</td></tr>
+    <tr><td>Good for</td><td>Behavior, style, format, domain jargon</td><td>Facts, changing data, per-user data, citations</td></tr>
+    <tr><td>Updating knowledge</td><td>Retrain (hours, money)</td><td>Re-index a document (seconds)</td></tr>
+    <tr><td>Auditability</td><td>Hard: "where did it learn that?"</td><td>Easy: you can show the retrieved sources</td></tr>
+    <tr><td>Analogy</td><td>Memorizing the textbook</td><td>Open-book exam</td></tr>
+  </table>
+  <p><span class="label">Why RAG fits a fitness coach:</span> biometrics change daily, advice must be grounded in vetted protocols (safety), knowledge updates should be cheap, and you cannot fine-tune a model per user per day. Fine-tuning may later adjust <em>tone</em>, never <em>facts</em>.</p>
+  <p><span class="label">Also know:</span> the cheapest option is plain prompting. The usual decision order is: prompt engineering, then RAG, then fine-tuning, then training from scratch (almost never).</p>
+
+  <h2>Two kinds of context <span class="core">CORE</span></h2>
+  <ul>
+    <li><span class="label">Structured</span> (HRV, sleep score, calories, weight): lives in SQL, fetched with an <em>exact</em> query ("user u1, last 7 days").</li>
+    <li><span class="label">Unstructured</span> (recovery protocols, nutrition guidelines): lives in a vector DB, fetched by <em>semantic similarity</em> ("things related to CNS fatigue").</li>
+  </ul>
+  <p>Putting numeric user data into a vector DB is a classic junior mistake: similarity search is fuzzy, and you need exact numbers.</p>
+
+  <h2>The request flow</h2>
+<div class="flow">  User question ──► embed question ──► vector search (Qdrant) ──► top-k protocol chunks ─┐
+                                                                                         ├─► build prompt ──► LLM ──► answer + sources
+  user_id ─────────► exact lookup (JSON now, Postgres later) ──► recent biometrics ─────┘
+
+  Offline (ingestion):  protocols.json ──► chunk ──► embed ──► upsert into Qdrant with metadata</div>
+
+  <h2>Project roadmap</h2>
+  <table>
+    <tr><th>Phase</th><th>What we build</th><th>Main lessons</th></tr>
+    <tr><td>1</td><td>Core RAG loop: FastAPI, mock JSON, OpenAI, embedded Qdrant</td><td>HTTP/FastAPI, embeddings, cosine similarity, vector search, prompt building</td></tr>
+    <tr><td>2</td><td>Retrieval quality and evaluation</td><td>Chunking, metadata filters, hybrid search, reranking, recall@k, MRR, LLM-as-judge</td></tr>
+    <tr><td>3</td><td>Persistence: Postgres, SQLAlchemy, Alembic, Docker</td><td>SQL, data modeling, migrations, dependency injection, rolling baselines</td></tr>
+    <tr><td>4</td><td>Google Health and FatSecret integrations</td><td>OAuth2, token refresh, pagination, retries, background jobs, idempotent upserts</td></tr>
+    <tr><td>5</td><td>Personalization and agents</td><td>Tool calling, structured outputs, guardrails, memory</td></tr>
+    <tr><td>6</td><td>Production readiness</td><td>JWT auth, async, streaming, caching, observability, CI, deployment</td></tr>
+  </table>
+
+  <h2>Phase 1 steps</h2>
+  <ol>
+    <li>Archive the generated scaffold, make the first commit <em>(done)</em></li>
+    <li>Minimal FastAPI app with <code>/health</code> and Pydantic models <em>(done)</em></li>
+    <li>Mock data: <code>data/protocols.json</code> and <code>data/users.json</code></li>
+    <li>Embeddings + cosine similarity by hand with NumPy</li>
+    <li>Ingest into embedded Qdrant and search with filters</li>
+    <li>Prompt assembly and generation with <code>gpt-4o-mini</code></li>
+    <li>Wire <code>POST /ask</code> end to end, returning answer + sources + scores</li>
+  </ol>
+</section>
+
+<!-- ============================== 3 HTTP ============================== -->
+<section class="chapter" id="http">
+  <h1>3. HTTP fundamentals</h1>
+  <p>Every REST API is HTTP underneath. Understand HTTP and every framework becomes easy.</p>
+
+  <h2>Anatomy of a request</h2>
+<pre><code>POST /api/v1/ask HTTP/1.1                       &lt;- method, path, version
+Host: api.fitcoach.com                          &lt;- headers (metadata)
+Authorization: Bearer eyJhbGciOi...
+Content-Type: application/json
+
+{"user_id": "u1", "question": "My HRV dropped, adjust leg day?"}   &lt;- body</code></pre>
+  <p>The response has the same shape: a status line (<code>HTTP/1.1 200 OK</code>), headers, and a body.</p>
+
+  <h2>Methods, safety and idempotency <span class="core">CORE</span></h2>
+  <table>
+    <tr><th>Method</th><th>Purpose</th><th>Safe?</th><th>Idempotent?</th></tr>
+    <tr><td><code>GET</code></td><td>Read</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td><code>POST</code></td><td>Create or trigger an action</td><td>No</td><td>No</td></tr>
+    <tr><td><code>PUT</code></td><td>Replace the whole resource</td><td>No</td><td>Yes</td></tr>
+    <tr><td><code>PATCH</code></td><td>Partial update</td><td>No</td><td>Not guaranteed</td></tr>
+    <tr><td><code>DELETE</code></td><td>Remove</td><td>No</td><td>Yes</td></tr>
+  </table>
+  <ul>
+    <li><span class="label">Safe</span>: does not change server state.</li>
+    <li><span class="label">Idempotent</span>: doing it once or ten times has the same effect. Networks fail and clients retry, so idempotent operations are safe to retry. <code>POST /payments</code> twice charges twice; that is why idempotency keys exist (chapter 7).</li>
+  </ul>
+
+  <h2>Status codes <span class="core">CORE</span></h2>
+  <table>
+    <tr><th>Code</th><th>Meaning</th><th>Typical use</th></tr>
+    <tr><td>200</td><td>OK</td><td>Successful read or update</td></tr>
+    <tr><td>201</td><td>Created</td><td>POST created a resource</td></tr>
+    <tr><td>202</td><td>Accepted</td><td>Work queued, finishes later (long AI jobs)</td></tr>
+    <tr><td>204</td><td>No Content</td><td>Successful DELETE</td></tr>
+    <tr><td>400</td><td>Bad Request</td><td>Malformed request</td></tr>
+    <tr><td>401</td><td>Unauthorized</td><td>Not authenticated: missing or invalid token</td></tr>
+    <tr><td>403</td><td>Forbidden</td><td>Authenticated, but not allowed</td></tr>
+    <tr><td>404</td><td>Not Found</td><td>Resource does not exist</td></tr>
+    <tr><td>409</td><td>Conflict</td><td>Duplicate or state conflict</td></tr>
+    <tr><td>422</td><td>Unprocessable Entity</td><td>Validation failed (FastAPI default)</td></tr>
+    <tr><td>429</td><td>Too Many Requests</td><td>Rate limit hit</td></tr>
+    <tr><td>500</td><td>Internal Server Error</td><td>Your bug</td></tr>
+    <tr><td>502 / 503 / 504</td><td>Bad Gateway / Unavailable / Gateway Timeout</td><td>An upstream service failed or is overloaded</td></tr>
+  </table>
+  <p>Rule of thumb: <strong>4xx = client's fault, 5xx = server's fault.</strong> Only 429 and 5xx are generally worth retrying.</p>
+
+  <h2>Headers worth knowing</h2>
+  <ul>
+    <li><code>Content-Type</code>: format of the body I am sending (<code>application/json</code>).</li>
+    <li><code>Accept</code>: format I want back.</li>
+    <li><code>Authorization</code>: credentials, usually <code>Bearer &lt;token&gt;</code>.</li>
+    <li><code>Retry-After</code>: how long to wait before retrying (with 429 or 503).</li>
+    <li><code>Cache-Control</code>, <code>ETag</code>: caching rules and resource versions.</li>
+    <li><code>X-Request-ID</code>: correlation ID to trace one request through all logs.</li>
+  </ul>
+
+  <h2>Statelessness and HTTPS</h2>
+  <p><span class="label">Stateless:</span> each request carries everything the server needs (including auth). The server keeps no memory of the client between requests, so any of N identical servers can handle any request. This is what makes horizontal scaling easy.</p>
+  <p><span class="label">HTTPS</span> = HTTP over TLS: encrypts traffic and proves the server's identity. Always required in production, especially for health data.</p>
+</section>
+
+<!-- ============================== 4 REST ============================== -->
+<section class="chapter" id="rest">
+  <h1>4. REST API design</h1>
+  <p>REST models your system as <strong>resources</strong> (nouns) acted on by HTTP <strong>methods</strong> (verbs).</p>
+
+  <h2>URL design <span class="core">CORE</span></h2>
+<pre><code>Good                                    Bad
+GET    /users/u1                        GET  /getUser?id=u1
+GET    /users/u1/biometrics?days=7      POST /fetchBiometricsForUser
+POST   /users/u1/workouts               POST /createWorkout
+PATCH  /users/u1/workouts/42            POST /updateWorkout
+DELETE /users/u1/workouts/42            GET  /deleteWorkout?id=42</code></pre>
+  <ul>
+    <li>Plural nouns, no verbs in paths. Nesting expresses ownership.</li>
+    <li>Query parameters for filtering, sorting and pagination: <code>?days=7&amp;sort=-recorded_on</code>.</li>
+    <li>Pragmatic exception: non-CRUD actions are fine as POST, e.g. <code>POST /ask</code> or <code>POST /plans:generate</code>. Be consistent.</li>
+  </ul>
+
+  <h2>Versioning</h2>
+  <p>Prefix with <code>/api/v1</code>. Once customers integrate you cannot break them. Additive changes (a new optional field) are fine in v1; breaking changes (renaming or removing a field, changing a type) go in v2.</p>
+
+  <h2>Pagination</h2>
+  <table>
+    <tr><th>Style</th><th>Example</th><th>Pros / cons</th></tr>
+    <tr><td>Offset</td><td><code>?limit=50&amp;offset=100</code></td><td>Simple; slow on big tables; items shift if data changes while paging</td></tr>
+    <tr><td>Cursor</td><td><code>?limit=50&amp;cursor=abc123</code>, response has <code>next_cursor</code></td><td>Stable and fast; cannot jump to page 37. Google APIs use this (<code>pageToken</code>)</td></tr>
+  </table>
+  <p>Never return unbounded lists.</p>
+
+  <h2>Consistent error format</h2>
+<pre><code>{"error": {"code": "user_not_found", "message": "User u9 does not exist", "request_id": "req_8f2a"}}</code></pre>
+  <p>A machine-readable <code>code</code>, a human-readable <code>message</code>, and a <code>request_id</code> for support.</p>
+
+  <h2>REST vs alternatives</h2>
+  <table>
+    <tr><th>Style</th><th>Use it when</th></tr>
+    <tr><td>REST</td><td>Default for public and customer-facing APIs; simple, cacheable, universal</td></tr>
+    <tr><td>GraphQL</td><td>Complex frontends that need flexible field selection; harder to cache and secure</td></tr>
+    <tr><td>gRPC</td><td>Internal service-to-service calls; binary, fast, strict protobuf schemas</td></tr>
+    <tr><td>WebSockets</td><td>Two-way real-time communication (live chat, multiplayer)</td></tr>
+    <tr><td>SSE (Server-Sent Events)</td><td>One-way server-to-client streaming; how LLM token streaming usually works</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 5 FASTAPI ============================== -->
+<section class="chapter" id="fastapi">
+  <h1>5. FastAPI</h1>
+
+  <h2>The stack</h2>
+  <ul>
+    <li><span class="label">FastAPI</span>: the framework; maps paths to Python functions.</li>
+    <li><span class="label">Uvicorn</span>: the server; handles networking and calls FastAPI.</li>
+    <li><span class="label">ASGI</span>: the async interface between them (successor of WSGI used by Flask/Django).</li>
+    <li><span class="label">Pydantic</span>: data validation from type hints.</li>
+  </ul>
+  <p>Run with <code>uvicorn app.main:app --reload</code> ("in <code>app/main.py</code>, serve the object <code>app</code>; restart on file changes"). Interactive docs at <code>/docs</code> are generated from your type hints (OpenAPI / Swagger).</p>
+  <p><span class="label">Why FastAPI over Flask?</span> Type-driven validation, automatic docs, native async, high performance; the de-facto choice for ML serving.</p>
+
+  <h2>Where inputs come from <span class="core">CORE</span></h2>
+<pre><code>from fastapi import FastAPI, Query
+
+app = FastAPI()
+
+@app.get("/users/{user_id}/biometrics")
+def list_biometrics(
+    user_id: str,                           # in the path -&gt; path parameter
+    days: int = 7,                          # simple type -&gt; query: ?days=14
+    limit: int = Query(50, ge=1, le=200),   # query with validation
+): ...
+
+@app.post("/users/{user_id}/workouts", status_code=201)
+def create_workout(user_id: str, workout: WorkoutCreate): ...   # Pydantic model -&gt; JSON body</code></pre>
+
+  <h2>Pydantic and "validate at the boundary" <span class="core">CORE</span></h2>
+<pre><code>from pydantic import BaseModel, Field
+
+class AskRequest(BaseModel):
+    user_id: str
+    question: str = Field(..., min_length=3, max_length=2000)   # ... = required</code></pre>
+  <p>FastAPI parses the JSON, validates it, and either gives you a typed object or returns <strong>422</strong> with a precise error before your code runs. Bad data is stopped at the door, so the rest of the system can trust its inputs.</p>
+  <p><code>str | None = None</code> means the field is optional and defaults to <code>None</code>.</p>
+
+  <h2>Separate input and output models</h2>
+<pre><code>class WorkoutCreate(BaseModel):     # what the client sends
+    name: str
+    sets: int = Field(gt=0, le=20)
+
+class WorkoutRead(WorkoutCreate):   # what the API returns
+    id: int
+    created_at: datetime
+
+@app.post("/workouts", response_model=WorkoutRead, status_code=201)
+def create(w: WorkoutCreate): ...</code></pre>
+  <p>Clients must not set <code>id</code>; you must never return <code>password_hash</code>. <code>response_model</code> enforces the output contract and filters extra fields.</p>
+
+  <h2>Errors</h2>
+<pre><code>from fastapi import HTTPException
+
+if user is None:
+    raise HTTPException(status_code=404, detail=f"User {user_id} not found")</code></pre>
+
+  <h2>Dependency injection with <code>Depends</code> <span class="core">CORE</span></h2>
+<pre><code>from fastapi import Depends, Header, HTTPException
+
+def get_current_user(authorization: str = Header(...)) -&gt; User:
+    user = verify_token(authorization.removeprefix("Bearer "))
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user
+
+@app.get("/me/biometrics")
+def my_biometrics(user: User = Depends(get_current_user)):
+    return load_biometrics(user.id)</code></pre>
+  <p>A dependency runs before the handler and injects its result. Use it for DB sessions, the current user, settings and clients. Two big wins:</p>
+  <ol>
+    <li>No duplicated logic (auth, DB setup) across endpoints.</li>
+    <li><strong>Testability:</strong> <code>app.dependency_overrides[get_llm] = lambda: FakeLLM()</code> lets you test without calling OpenAI.</li>
+  </ol>
+
+  <h2>Project structure: routers and layers</h2>
+<pre><code># app/routers/workouts.py
+router = APIRouter(prefix="/api/v1/workouts", tags=["workouts"])
+
+# app/main.py
+app.include_router(workouts.router)</code></pre>
+<div class="flow">Router (HTTP only)  ──►  Service (business logic)  ──►  Data access (DB, Qdrant, external APIs)</div>
+  <p>Routers parse requests and shape responses; services decide what to do; the data layer talks to storage. Logic becomes reusable from scripts and jobs, and each layer is testable alone.</p>
+
+  <h2>Lifespan: create expensive things once</h2>
+<pre><code>from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.qdrant = QdrantClient(path="./qdrant_data")   # startup
+    yield
+    app.state.qdrant.close()                                 # shutdown
+
+app = FastAPI(lifespan=lifespan)</code></pre>
+
+  <h2>Middleware and CORS</h2>
+  <p>Middleware wraps every request: logging, request IDs, timing, CORS. <span class="label">CORS</span> is the browser rule that blocks a page on <code>app.com</code> from calling <code>api.com</code> unless the API allows that origin. "Works in Postman, fails in the browser" almost always means CORS. It is a browser protection, not a server security feature.</p>
+
+  <h2>Sync vs async <span class="core">CORE</span></h2>
+  <ul>
+    <li><code>def</code> handlers run in a thread pool: blocking code is acceptable.</li>
+    <li><code>async def</code> handlers run on the event loop: everything inside must be non-blocking (<code>await httpx.AsyncClient().get(...)</code>, <code>AsyncOpenAI</code>).</li>
+    <li>A blocking call (<code>time.sleep</code>, <code>requests.get</code>, sync DB driver) inside <code>async def</code> freezes all concurrent requests. Most common FastAPI bug.</li>
+    <li>LLM apps are <strong>I/O-bound</strong> (waiting on OpenAI, DBs), which is exactly where async shines. CPU-bound work (embedding locally, heavy NumPy) belongs in worker processes.</li>
+  </ul>
+
+  <h2>Streaming LLM output</h2>
+<pre><code>from fastapi.responses import StreamingResponse
+
+@app.post("/ask/stream")
+def ask_stream(payload: AskRequest):
+    def tokens():
+        stream = client.chat.completions.create(
+            model="gpt-4o-mini", messages=build_messages(payload), stream=True
+        )
+        for chunk in stream:
+            yield chunk.choices[0].delta.content or ""
+    return StreamingResponse(tokens(), media_type="text/plain")</code></pre>
+  <p>Users see text after a few hundred milliseconds instead of waiting for the full answer. Key metric: <strong>time to first token (TTFT)</strong>.</p>
+
+  <h2>Long-running jobs</h2>
+<pre><code>POST /ingest-jobs       -&gt; 202 Accepted  {"job_id": "j1"}
+GET  /ingest-jobs/j1    -&gt; {"status": "running", "progress": 0.4}</code></pre>
+  <p>Don't hold an HTTP request open for minutes. Queue the work (Celery, RQ, Arq; or <code>BackgroundTasks</code> for small jobs) and let the client poll or receive a webhook.</p>
+
+  <h2>Testing</h2>
+<pre><code>from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_ask_rejects_short_question():
+    r = client.post("/ask", json={"user_id": "u1", "question": "hi"})
+    assert r.status_code == 422</code></pre>
+  <p>No running server needed. Combine with <code>dependency_overrides</code> to fake the LLM for fast, free, deterministic tests.</p>
+
+  <h2>Configuration</h2>
+<pre><code>class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
+    openai_api_key: str = ""     # read from OPENAI_API_KEY
+
+@lru_cache
+def get_settings() -&gt; Settings:
+    return Settings()</code></pre>
+  <p>12-Factor rule: config lives in the environment. Commit <code>.env.example</code>, never <code>.env</code>. Production secrets go in a secret manager.</p>
+</section>
+
+<!-- ============================== 6 AUTH ============================== -->
+<section class="chapter" id="auth">
+  <h1>6. Authentication, authorization and security</h1>
+
+  <h2>Authn vs authz <span class="core">CORE</span></h2>
+  <ul>
+    <li><span class="label">Authentication</span>: who are you? Failure = 401.</li>
+    <li><span class="label">Authorization</span>: what may you do? Failure = 403.</li>
+  </ul>
+
+  <h2>Mechanisms</h2>
+  <table>
+    <tr><th>Mechanism</th><th>How it works</th><th>Typical use</th></tr>
+    <tr><td>API key</td><td>Static secret in a header</td><td>Server-to-server (your OpenAI key)</td></tr>
+    <tr><td>Session cookie</td><td>Server stores session, browser sends cookie</td><td>Traditional web apps</td></tr>
+    <tr><td>JWT</td><td>Signed token with claims (<code>sub</code>, <code>exp</code>); verified without a DB lookup</td><td>Mobile and SPA backends, microservices</td></tr>
+    <tr><td>OAuth2</td><td>Delegated access: "app X may read my data at service Y"</td><td>Google Health, FatSecret, "Login with Google"</td></tr>
+  </table>
+  <div class="box warn"><p>A JWT is <strong>signed, not encrypted</strong>. Anyone can base64-decode and read it. Never put secrets in it. Keep expiry short.</p></div>
+
+  <h2>OAuth2 Authorization Code flow (+ PKCE) <span class="core">CORE</span></h2>
+  <ol>
+    <li>Your app redirects the user to Google with <code>client_id</code>, requested <code>scope</code>s, <code>redirect_uri</code>, a <code>state</code> value (CSRF protection) and a PKCE challenge.</li>
+    <li>The user logs in at Google and consents.</li>
+    <li>Google redirects back to your <code>redirect_uri</code> with a short-lived <code>code</code>.</li>
+    <li>Your backend exchanges the code (plus client secret / PKCE verifier) for an <strong>access token</strong> (short-lived, ~1 hour) and a <strong>refresh token</strong> (long-lived).</li>
+    <li>Call the API with <code>Authorization: Bearer &lt;access_token&gt;</code>. When it expires, use the refresh token to get a new one.</li>
+  </ol>
+  <p>Forgetting step 5's refresh logic is the top reason integrations "randomly break after an hour". <span class="label">Client Credentials</span> flow is the machine-to-machine variant with no user. <span class="label">Scopes</span> limit what a token may do: request the minimum.</p>
+
+  <h2>BOLA: the #1 API vulnerability <span class="core">CORE</span></h2>
+<pre><code>@app.get("/users/{user_id}/biometrics")
+def get_bio(user_id: str, user: User = Depends(get_current_user)):
+    if user.id != user_id:
+        raise HTTPException(status_code=403)   # without this, any logged-in user
+    ...                                        # can read anyone's health data</code></pre>
+  <p>Broken Object Level Authorization tops the OWASP API Security Top 10. Being logged in is not the same as being allowed. Check ownership on every object access.</p>
+
+  <h2>Security checklist</h2>
+  <ul>
+    <li>HTTPS everywhere; validate all input (Pydantic); parameterized SQL (never string-format queries).</li>
+    <li>Never log secrets, tokens or health data; least-privilege keys and scopes.</li>
+    <li>Rate-limit per user/key; hash passwords with bcrypt or argon2 (never store plain text).</li>
+    <li>Health data is sensitive personal data under GDPR (special category). Know: consent, data minimization, right to deletion, encryption at rest.</li>
+    <li>For LLM apps, also prompt injection (chapter 12).</li>
+  </ul>
+</section>
+
+<!-- ============================== 7 CONSUME ============================== -->
+<section class="chapter" id="consume">
+  <h1>7. Consuming external APIs</h1>
+  <p>As an FDE you will spend more time calling other people's APIs (customer systems, Google, FatSecret, OpenAI) than building your own. Robust clients assume failure.</p>
+
+  <h2>The checklist for every external call <span class="core">CORE</span></h2>
+  <ol>
+    <li><strong>Timeouts</strong> always. No timeout means one hung upstream can hang your service.</li>
+    <li><strong>Retry only retryable errors</strong>: 429, 5xx, network errors. Never retry 400/401/403/404/422.</li>
+    <li><strong>Exponential backoff with jitter</strong>: ~1s, 2s, 4s, 8s plus randomness, so thousands of clients do not retry in sync (thundering herd).</li>
+    <li><strong>Respect <code>Retry-After</code></strong> when given.</li>
+    <li><strong>Idempotency keys</strong> for non-idempotent writes: <code>Idempotency-Key: &lt;uuid&gt;</code> lets the server drop duplicates.</li>
+    <li><strong>Circuit breaker</strong>: after repeated failures, stop calling for a while and fail fast or degrade gracefully.</li>
+  </ol>
+
+<pre><code>import random
+import time
+
+import httpx
+
+RETRYABLE = {429, 500, 502, 503, 504}
+
+def get_json_with_retry(url: str, headers: dict, max_attempts: int = 5) -&gt; dict:
+    for attempt in range(max_attempts):
+        try:
+            r = httpx.get(url, headers=headers, timeout=10.0)
+            if r.status_code not in RETRYABLE:
+                r.raise_for_status()           # 4xx: fail fast, no retry
+                return r.json()
+            retry_after = r.headers.get("Retry-After", "")
+        except httpx.TransportError:           # DNS, connection reset, timeout
+            retry_after = ""
+        delay = float(retry_after) if retry_after.isdigit() else min(2**attempt, 30) + random.random()
+        time.sleep(delay)
+    raise RuntimeError(f"Gave up on {url} after {max_attempts} attempts")</code></pre>
+  <p>In real code, the <code>tenacity</code> library does this declaratively. Be able to write it by hand in an interview.</p>
+
+  <h2>Webhooks</h2>
+  <p>The other service calls <em>you</em> when something happens ("new sleep data").</p>
+<pre><code>import hashlib
+import hmac
+
+expected = hmac.new(WEBHOOK_SECRET, raw_body, hashlib.sha256).hexdigest()
+if not hmac.compare_digest(expected, request.headers["X-Signature"]):
+    raise HTTPException(status_code=401)</code></pre>
+  <ul>
+    <li>Verify the signature over the <em>raw</em> body, or anyone can send you fake events. <code>compare_digest</code> prevents timing attacks.</li>
+    <li>Respond 2xx quickly; do heavy work in the background, or the sender times out and retries.</li>
+    <li>Expect duplicates and out-of-order delivery: deduplicate on event ID.</li>
+  </ul>
+
+  <h2>Polling vs webhooks</h2>
+  <p>Polling is simple but wasteful and laggy; webhooks are real-time but more complex. Robust integrations use webhooks plus a periodic reconciliation sync to catch missed events.</p>
+
+  <h2>Reading unfamiliar API docs: the five questions</h2>
+  <ol>
+    <li>How do I authenticate (API key, OAuth2 which flow, scopes)?</li>
+    <li>What are the rate limits and how are they signaled?</li>
+    <li>How does pagination work?</li>
+    <li>What does an error look like?</li>
+    <li>What are the data units and time zones (HRV in ms? timestamps UTC or local?)</li>
+  </ol>
+  <p>Data normalization matters: map every provider into <em>your</em> schema (an adapter per provider), so the rest of the system never depends on Google's or FatSecret's format.</p>
+</section>
+
+<!-- ============================== 8 PYTHON ============================== -->
+<section class="chapter" id="python">
+  <h1>8. Python essentials for backend work</h1>
+
+  <h2>Environment</h2>
+  <ul>
+    <li><span class="label">Virtual environment</span> (<code>python -m venv .venv</code>): isolated packages per project.</li>
+    <li><code>requirements.txt</code> (or <code>pyproject.toml</code> with uv/poetry) pins dependencies. Lock exact versions for reproducible deploys.</li>
+  </ul>
+
+  <h2>Language features you will use daily</h2>
+  <table>
+    <tr><th>Feature</th><th>Example</th><th>Why it matters</th></tr>
+    <tr><td>Type hints</td><td><code>def f(x: int) -&gt; str</code></td><td>FastAPI and Pydantic are driven by them; editors catch bugs</td></tr>
+    <tr><td>Dataclass vs Pydantic</td><td><code>@dataclass</code> / <code>BaseModel</code></td><td>Dataclass = plain container; Pydantic = validates and parses untrusted input</td></tr>
+    <tr><td>Decorators</td><td><code>@app.get(...)</code>, <code>@lru_cache</code></td><td>Functions that wrap or register other functions</td></tr>
+    <tr><td>Context managers</td><td><code>with open(...)</code>, <code>with Session() as s</code></td><td>Guaranteed cleanup of files, connections, transactions</td></tr>
+    <tr><td>Generators</td><td><code>yield</code></td><td>Lazy sequences; streaming responses; FastAPI dependencies with cleanup</td></tr>
+    <tr><td>async / await</td><td><code>await client.get(url)</code></td><td>Concurrency for I/O-bound work on one thread</td></tr>
+    <tr><td>Exceptions</td><td><code>try / except / raise</code></td><td>Catch specific exceptions, never a bare <code>except:</code></td></tr>
+  </table>
+
+  <h2>async in one picture</h2>
+<pre><code>import asyncio
+import httpx
+
+async def fetch_all(urls: list[str]) -&gt; list[int]:
+    async with httpx.AsyncClient(timeout=10) as client:
+        responses = await asyncio.gather(*(client.get(u) for u in urls))
+    return [r.status_code for r in responses]</code></pre>
+  <p>Ten 1-second requests take about 1 second total instead of 10, because the event loop switches tasks while each one waits on the network. Async does not make CPU work faster.</p>
+
+  <h2>Concurrency vocabulary</h2>
+  <ul>
+    <li><span class="label">I/O-bound</span> (network, disk): use async or threads.</li>
+    <li><span class="label">CPU-bound</span> (math, local models): use multiple processes; the GIL limits threads for CPU work in standard CPython.</li>
+  </ul>
+</section>
+
+<!-- ============================== 9 SQL ============================== -->
+<section class="chapter" id="sql">
+  <h1>9. SQL and relational databases</h1>
+
+  <h2>Core concepts <span class="core">CORE</span></h2>
+  <ul>
+    <li><span class="label">Table</span> = rows (records) and columns (typed fields).</li>
+    <li><span class="label">Primary key (PK)</span>: unique identifier of a row (<code>users.id</code>).</li>
+    <li><span class="label">Foreign key (FK)</span>: column referencing another table's PK (<code>daily_biometrics.user_id -&gt; users.id</code>); the DB enforces the relationship.</li>
+    <li><span class="label">Constraints</span>: <code>NOT NULL</code>, <code>UNIQUE (user_id, recorded_on)</code> (one row per user per day; enables idempotent upserts), <code>CHECK (sleep_score BETWEEN 0 AND 100)</code>.</li>
+    <li><span class="label">Index</span>: a data structure (usually a B-tree) that makes lookups fast, like a book index. Speeds reads, slows writes slightly. Index columns you filter or join on.</li>
+  </ul>
+
+  <h2>Our schema</h2>
+<pre><code>CREATE TABLE users (
+    id          UUID PRIMARY KEY,
+    email       TEXT UNIQUE NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE daily_biometrics (
+    id            UUID PRIMARY KEY,
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    recorded_on   DATE NOT NULL,
+    hrv_ms        REAL,
+    sleep_score   INT CHECK (sleep_score BETWEEN 0 AND 100),
+    resting_hr    INT,
+    calories_kcal INT,
+    UNIQUE (user_id, recorded_on)
+);
+CREATE INDEX ix_bio_user_date ON daily_biometrics (user_id, recorded_on);</code></pre>
+
+  <h2>Queries you must be able to write <span class="core">CORE</span></h2>
+<pre><code>-- Filter, sort, limit
+SELECT recorded_on, hrv_ms FROM daily_biometrics
+WHERE user_id = :uid ORDER BY recorded_on DESC LIMIT 7;
+
+-- JOIN
+SELECT u.email, b.recorded_on, b.hrv_ms
+FROM users u
+JOIN daily_biometrics b ON b.user_id = u.id
+WHERE b.recorded_on &gt;= CURRENT_DATE - INTERVAL '7 days';
+
+-- Aggregate with GROUP BY / HAVING
+SELECT user_id, AVG(sleep_score) AS avg_sleep
+FROM daily_biometrics GROUP BY user_id HAVING AVG(sleep_score) &lt; 60;
+
+-- Window function: 7-day rolling HRV baseline
+SELECT recorded_on, hrv_ms,
+       AVG(hrv_ms) OVER (ORDER BY recorded_on
+                         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS hrv_7d_avg
+FROM daily_biometrics WHERE user_id = :uid;
+
+-- Upsert (idempotent ingestion from Google Health)
+INSERT INTO daily_biometrics (id, user_id, recorded_on, hrv_ms)
+VALUES (:id, :uid, :day, :hrv)
+ON CONFLICT (user_id, recorded_on) DO UPDATE SET hrv_ms = EXCLUDED.hrv_ms;</code></pre>
+  <p>Know the JOIN types: <code>INNER</code> (only matches), <code>LEFT</code> (all left rows, NULLs when no match). <code>WHERE</code> filters rows before grouping; <code>HAVING</code> filters groups after.</p>
+
+  <h2>Transactions and ACID</h2>
+  <ul>
+    <li><span class="label">Atomicity</span>: all statements succeed or none do.</li>
+    <li><span class="label">Consistency</span>: constraints always hold.</li>
+    <li><span class="label">Isolation</span>: concurrent transactions don't see each other's half-done work.</li>
+    <li><span class="label">Durability</span>: committed data survives crashes.</li>
+  </ul>
+
+  <h2>Design and performance</h2>
+  <ul>
+    <li><span class="label">Normalization</span>: store each fact once (user email only in <code>users</code>). Denormalize deliberately for read speed.</li>
+    <li><span class="label">N+1 problem</span>: 1 query for 100 users, then 100 queries for their biometrics. Fix with a JOIN or eager loading.</li>
+    <li><span class="label">SQL injection</span>: never build SQL with f-strings from user input. Use parameters (<code>:uid</code>) or the ORM.</li>
+    <li><code>EXPLAIN ANALYZE</code> shows how Postgres executes a query (index scan vs sequential scan).</li>
+    <li><span class="label">Connection pooling</span>: reuse DB connections instead of opening one per request.</li>
+  </ul>
+
+  <h2>ORM and migrations</h2>
+<pre><code>class DailyBiometrics(Base):
+    __tablename__ = "daily_biometrics"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    hrv_ms: Mapped[float | None]
+
+stmt = select(DailyBiometrics).where(DailyBiometrics.user_id == uid).limit(7)
+rows = session.scalars(stmt).all()</code></pre>
+  <p><span class="label">SQLAlchemy</span> maps Python classes to tables. <span class="label">Alembic</span> manages <em>migrations</em>: versioned scripts that evolve the schema (add a column) safely in every environment. Never edit production schemas by hand.</p>
+
+  <h2>SQL vs NoSQL vs vector DB</h2>
+  <table>
+    <tr><th>Type</th><th>Strength</th><th>In our app</th></tr>
+    <tr><td>Relational (Postgres)</td><td>Structure, joins, transactions, exact queries</td><td>Users, biometrics, meals, tokens</td></tr>
+    <tr><td>Document / key-value (MongoDB, Redis)</td><td>Flexible schemas, very fast simple lookups, caching</td><td>Redis for caching and rate limits</td></tr>
+    <tr><td>Vector (Qdrant, pgvector)</td><td>Similarity search over embeddings</td><td>Protocol knowledge base</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 10 VECTORS ============================== -->
+<section class="chapter" id="vectors">
+  <h1>10. Embeddings and vector databases</h1>
+
+  <h2>What an embedding is <span class="core">CORE</span></h2>
+  <p>An embedding model turns text into a list of numbers (a vector) such that <strong>texts with similar meaning end up close together</strong> in that space. <code>text-embedding-3-small</code> produces 1536 numbers per text. "CNS fatigue after heavy squats" and "nervous system feels fried" land near each other even with no shared words. That is the advantage over keyword search.</p>
+<pre><code>from openai import OpenAI
+
+client = OpenAI()
+resp = client.embeddings.create(model="text-embedding-3-small",
+                                input=["HRV dropped 15% today", "Zone 2 cardio for recovery"])
+vectors = [d.embedding for d in resp.data]     # two lists of 1536 floats</code></pre>
+  <p>Rule: the query and the documents must be embedded with the <strong>same model</strong>. Changing models means re-embedding everything.</p>
+
+  <h2>Similarity metrics <span class="core">CORE</span></h2>
+  <p><span class="label">Cosine similarity</span> = cos(angle between vectors) = (a · b) / (|a| |b|). Range -1 to 1; higher = more similar. It ignores vector length and compares direction only.</p>
+<pre><code>import numpy as np
+
+def cosine(a: np.ndarray, b: np.ndarray) -&gt; float:
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))</code></pre>
+  <ul>
+    <li><span class="label">Dot product</span>: equals cosine when vectors are normalized to length 1 (OpenAI embeddings are), and is cheaper to compute.</li>
+    <li><span class="label">Euclidean distance</span>: straight-line distance; lower = more similar.</li>
+  </ul>
+
+  <h2>Why a vector database? <span class="core">CORE</span></h2>
+  <p>Brute force compares the query with every vector: cost grows with N x dimensions. Fine for 1,000 documents, too slow for 10 million. Vector DBs use <strong>Approximate Nearest Neighbor (ANN)</strong> indexes, which trade a little accuracy for huge speed.</p>
+  <ul>
+    <li><span class="label">HNSW</span> (Hierarchical Navigable Small World): a layered graph; search starts at a sparse top layer and greedily descends to dense lower layers. Roughly logarithmic search time. Parameters (<code>m</code>, <code>ef</code>) trade recall vs speed and memory. Used by Qdrant, pgvector, Weaviate.</li>
+    <li><span class="label">IVF</span>: cluster vectors and search only nearby clusters. <span class="label">PQ</span> (product quantization): compress vectors to save memory.</li>
+    <li>Beyond the index, a vector DB also gives you persistence, metadata (payload) filtering, updates and deletes, replication and an API.</li>
+  </ul>
+
+  <h2>Choosing a vector store</h2>
+  <table>
+    <tr><th>Option</th><th>Pros</th><th>Cons</th></tr>
+    <tr><td>Qdrant (our choice)</td><td>Open source, runs embedded in Python or as a server, strong payload filtering, fast (Rust)</td><td>One more system to operate in production</td></tr>
+    <tr><td>Pinecone</td><td>Fully managed, zero ops</td><td>Paid, cloud-only, vendor lock-in, cannot run locally</td></tr>
+    <tr><td>pgvector</td><td>Lives inside Postgres: one database, SQL joins with user data, transactions</td><td>Less specialized at very large scale</td></tr>
+    <tr><td>Chroma</td><td>Very easy for prototypes</td><td>Less proven in production</td></tr>
+    <tr><td>FAISS</td><td>Extremely fast library from Meta</td><td>A library, not a database: no persistence, filtering or API out of the box</td></tr>
+  </table>
+
+  <h2>Qdrant basics</h2>
+<pre><code>from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, FieldCondition, Filter, MatchValue, PointStruct, VectorParams
+
+client = QdrantClient(path="./qdrant_data")           # embedded mode, no Docker
+client.create_collection("protocols",
+    vectors_config=VectorParams(size=1536, distance=Distance.COSINE))
+
+client.upsert("protocols", points=[
+    PointStruct(id=1, vector=vec, payload={"title": "HRV autoregulation", "category": "recovery"}),
+])
+
+hits = client.query_points("protocols", query=query_vec, limit=3,
+    query_filter=Filter(must=[FieldCondition(key="category", match=MatchValue(value="recovery"))]),
+).points
+for h in hits:
+    print(h.score, h.payload["title"])</code></pre>
+  <p>Vocabulary: <span class="label">collection</span> (like a table), <span class="label">point</span> (id + vector + payload), <span class="label">payload</span> (metadata JSON you can filter on).</p>
+</section>
+
+<!-- ============================== 11 RAG ============================== -->
+<section class="chapter" id="rag">
+  <h1>11. The RAG pipeline and evaluation</h1>
+
+  <h2>Two pipelines <span class="core">CORE</span></h2>
+  <p><span class="label">Ingestion (offline):</span> load documents, clean them, split into chunks, embed each chunk, upsert into the vector DB with metadata (source, title, category, date).</p>
+  <p><span class="label">Query (online):</span> embed the question, retrieve top-k chunks (with filters), optionally rerank, build a prompt (instructions + user data + chunks + question), generate, return the answer with cited sources.</p>
+
+  <h2>Chunking</h2>
+  <ul>
+    <li>Why: embedding a whole 30-page document blurs its meaning into one vector, and you cannot fit everything in the prompt.</li>
+    <li>Strategies: fixed size (e.g. ~300-800 tokens) with overlap (10-20%) so ideas are not cut in half; recursive splitting on paragraphs and sentences; semantic or structure-aware splitting (headings, sections).</li>
+    <li>Trade-off: small chunks are precise but lose context; large chunks keep context but dilute relevance and cost more tokens.</li>
+    <li>Store parent document ID in metadata so you can fetch neighbors or cite the source.</li>
+  </ul>
+
+  <h2>Improving retrieval</h2>
+  <table>
+    <tr><th>Technique</th><th>What it does</th></tr>
+    <tr><td>Metadata filtering</td><td>Restrict search (category = nutrition, language = tr, user's injuries)</td></tr>
+    <tr><td>Hybrid search</td><td>Combine dense vectors (meaning) with BM25 keyword search (exact terms like "RPE", drug names). Merge with Reciprocal Rank Fusion</td></tr>
+    <tr><td>Reranking</td><td>Retrieve ~20-50 candidates fast, then rescore with a cross-encoder that reads query and chunk together; keep the best 3-5. More accurate, slower</td></tr>
+    <tr><td>Query rewriting</td><td>LLM turns a vague or conversational question into a better search query (or several)</td></tr>
+    <tr><td>Contextual retrieval</td><td>Enrich the query with structured context ("HRV -15% vs baseline") before embedding</td></tr>
+  </table>
+
+  <h2>Failure modes <span class="core">CORE</span></h2>
+  <ul>
+    <li><span class="label">Retrieval miss</span>: the right chunk was not retrieved, so the LLM answers from its own memory (hallucination risk).</li>
+    <li><span class="label">Irrelevant context</span>: wrong chunks distract or mislead the model.</li>
+    <li><span class="label">Lost in the middle</span>: models use information at the start and end of long contexts better than the middle. More chunks is not always better.</li>
+    <li><span class="label">Stale index</span>: documents changed but embeddings were not updated.</li>
+    <li><span class="label">Unfaithful answer</span>: correct chunks retrieved, but the answer contradicts or goes beyond them.</li>
+  </ul>
+  <p>Mitigations: instruct the model to answer only from context and say "I don't know" otherwise, require citations by chunk ID, set a similarity score threshold, and evaluate.</p>
+
+  <h2>Evaluation: "how do you know it works?" <span class="core">CORE</span></h2>
+  <p>Build a <strong>golden set</strong>: 30-100 realistic questions, each labeled with the chunk(s) that should be retrieved and key facts the answer must contain. Evaluate the two halves separately.</p>
+  <table>
+    <tr><th>Stage</th><th>Metric</th><th>Meaning</th></tr>
+    <tr><td>Retrieval</td><td>Recall@k (hit rate)</td><td>Share of questions where a correct chunk appears in the top k</td></tr>
+    <tr><td>Retrieval</td><td>MRR</td><td>Mean of 1 / rank of the first correct chunk (rewards ranking it first)</td></tr>
+    <tr><td>Retrieval</td><td>Precision@k</td><td>Share of the top k that is relevant</td></tr>
+    <tr><td>Generation</td><td>Faithfulness / groundedness</td><td>Is every claim supported by the retrieved context?</td></tr>
+    <tr><td>Generation</td><td>Answer relevance / correctness</td><td>Does it answer the question; does it contain the key facts?</td></tr>
+  </table>
+  <p><span class="label">LLM-as-judge:</span> a strong model grades answers against a rubric. Cheap and scalable, but validate it against human labels on a sample. Tools: Ragas, DeepEval, promptfoo. Run the eval on every change (chunk size, model, prompt) so improvements are measured, not guessed.</p>
+</section>
+
+<!-- ============================== 12 LLM ============================== -->
+<section class="chapter" id="llm">
+  <h1>12. LLMs and LLM APIs</h1>
+
+  <h2>Core vocabulary <span class="core">CORE</span></h2>
+  <ul>
+    <li><span class="label">Token</span>: the unit models read and bill by; roughly 4 characters or 0.75 English words. Turkish usually needs more tokens per word.</li>
+    <li><span class="label">Context window</span>: max tokens of input + output per call. Bigger is not free: cost, latency and "lost in the middle".</li>
+    <li><span class="label">Temperature</span>: randomness. Low (0-0.3) for factual, consistent answers; higher for creative text.</li>
+    <li><span class="label">Roles</span>: <code>system</code> (rules and persona), <code>user</code> (input), <code>assistant</code> (model output). The API is stateless: you resend the conversation history every call.</li>
+    <li><span class="label">Hallucination</span>: fluent but false output. RAG, citations and evaluation reduce it; nothing removes it fully.</li>
+  </ul>
+
+  <h2>A chat completion</h2>
+<pre><code>resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    temperature=0.2,
+    messages=[
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Biometrics:\n{bio}\n\nProtocols:\n{chunks}\n\nQuestion: {q}"},
+    ],
+)
+answer = resp.choices[0].message.content
+usage = resp.usage            # prompt_tokens, completion_tokens: log these for cost tracking</code></pre>
+
+  <h2>Prompt structure for RAG</h2>
+  <ol>
+    <li>Role and goal ("You are an evidence-informed strength and recovery coach").</li>
+    <li>Rules: use only the provided context; cite protocol IDs; say when information is missing; no medical diagnosis; recommend a professional for red flags.</li>
+    <li>Clearly delimited data sections (user biometrics, retrieved protocols with IDs).</li>
+    <li>The question and the desired output format.</li>
+  </ol>
+
+  <h2>Structured outputs and tool calling</h2>
+  <ul>
+    <li><span class="label">Structured outputs</span>: force the model to return JSON matching a schema (e.g. a Pydantic <code>WorkoutPlan</code>), then validate it. Turns text into data your backend can use.</li>
+    <li><span class="label">Tool / function calling</span>: you describe functions (<code>get_biometrics(days)</code>, <code>search_protocols(query)</code>); the model replies with which function to call and arguments; <em>your code</em> executes it and sends the result back. This loop is the basis of "agents". The model never executes anything itself.</li>
+  </ul>
+
+  <h2>Cost, latency and reliability</h2>
+  <ul>
+    <li>Cost = input tokens x price + output tokens x price. Output tokens are typically several times more expensive. Fewer, better chunks save money.</li>
+    <li>Latency: use smaller models where possible, stream output, cache repeated work, run independent calls in parallel.</li>
+    <li>Provider errors happen (429, 5xx, timeouts): apply chapter 7. Consider a fallback model.</li>
+  </ul>
+
+  <h2>Prompt injection and guardrails <span class="core">CORE</span></h2>
+  <p>Untrusted text (user input, retrieved documents, web pages, API data) can contain instructions like "ignore previous instructions". Mitigations:</p>
+  <ul>
+    <li>Treat retrieved content as data: delimit it and tell the model it is reference material, not instructions.</li>
+    <li>Least privilege for tools: the model should not be able to delete data or access other users' records.</li>
+    <li>Validate outputs (schemas, allow-lists), and enforce authorization in code, never in the prompt.</li>
+    <li>Domain guardrails: detect medical red flags (chest pain, fainting) and respond with a safe, fixed message.</li>
+  </ul>
+
+  <h2>When to use what</h2>
+  <table>
+    <tr><th>Need</th><th>Approach</th></tr>
+    <tr><td>Better format or instructions</td><td>Prompt engineering, few-shot examples</td></tr>
+    <tr><td>Knowledge that changes or is private</td><td>RAG</td></tr>
+    <tr><td>Consistent style or narrow task at lower cost</td><td>Fine-tuning (often a small model)</td></tr>
+    <tr><td>Taking actions, multi-step work</td><td>Tool calling / agents</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 13 DESIGN ============================== -->
+<section class="chapter" id="design">
+  <h1>13. System design for AI applications</h1>
+
+  <h2>Interview framework <span class="core">CORE</span></h2>
+  <ol>
+    <li><span class="label">Clarify requirements</span>: functional (what it does) and non-functional (latency, scale, availability, privacy, cost).</li>
+    <li><span class="label">Estimate</span>: users, requests per second, data size, token cost per request.</li>
+    <li><span class="label">API</span>: the main endpoints and their inputs and outputs.</li>
+    <li><span class="label">Data model</span>: what lives in SQL, vector DB, cache, object storage.</li>
+    <li><span class="label">High-level architecture</span>: draw boxes and arrows.</li>
+    <li><span class="label">Deep dive</span>: the hardest part (retrieval quality, ingestion at scale, sync with external APIs).</li>
+    <li><span class="label">Trade-offs and failure modes</span>: what breaks first, how you monitor and evolve it.</li>
+  </ol>
+  <p>Always say the trade-off out loud: "I chose X over Y because..., at the cost of...".</p>
+
+  <h2>Reference architecture for our coach</h2>
+<div class="flow">  Mobile app ──► API gateway / load balancer ──► FastAPI (stateless, N replicas)
+                                                   │        │          │
+                                                   ▼        ▼          ▼
+                                             Postgres    Qdrant     Redis (cache, rate limits)
+                                                   ▲                   │
+                                                   │                   ▼
+  Google Health / FatSecret ──► webhooks + scheduled sync ──► queue ──► workers (normalize, upsert)
+
+  FastAPI ──► LLM provider (OpenAI)        Observability: logs, metrics, traces, eval dashboard</div>
+
+  <h2>Key building blocks</h2>
+  <ul>
+    <li><span class="label">Stateless API + load balancer</span>: scale horizontally by adding replicas.</li>
+    <li><span class="label">Queue + workers</span> (Redis/RQ, Celery, SQS): decouple slow or bursty work (ingestion, nightly plan generation) from user requests; retries and backpressure.</li>
+    <li><span class="label">Caching</span>: embedding cache (same text, same vector), response cache for repeated questions, cache-aside pattern; always define invalidation.</li>
+    <li><span class="label">Rate limiting</span>: token bucket per user; protects you from abuse and runaway LLM bills.</li>
+    <li><span class="label">Observability</span>: structured logs with request IDs; metrics (p50/p95/p99 latency, error rate, tokens and cost per request); tracing (OpenTelemetry, Langfuse) showing time per step: "2.1s in LLM, 40ms in Qdrant".</li>
+    <li><span class="label">Reliability</span>: timeouts, retries, circuit breakers, graceful degradation (if the LLM is down, return a rule-based recommendation).</li>
+    <li><span class="label">Privacy</span>: encrypt at rest and in transit, minimize data sent to the LLM, per-user isolation, audit logs, deletion on request.</li>
+  </ul>
+
+  <h2>Useful numbers (orders of magnitude)</h2>
+  <table>
+    <tr><th>Operation</th><th>Typical latency</th></tr>
+    <tr><td>Redis lookup</td><td>&lt; 1 ms</td></tr>
+    <tr><td>Indexed Postgres query</td><td>1-10 ms</td></tr>
+    <tr><td>Vector search (ANN, ~1M vectors)</td><td>5-50 ms</td></tr>
+    <tr><td>Embedding API call</td><td>50-300 ms</td></tr>
+    <tr><td>LLM time to first token</td><td>200 ms - 1 s</td></tr>
+    <tr><td>Full LLM answer (300 tokens)</td><td>2-10 s</td></tr>
+  </table>
+  <p>Takeaway: in an AI app, the LLM dominates latency and cost. Optimize there first.</p>
+</section>
+
+<!-- ============================== 14 FDE ============================== -->
+<section class="chapter" id="fde">
+  <h1>14. What makes a great Forward Deployed Engineer</h1>
+  <p>An FDE sits between the product and the customer: you take a general AI platform and make it solve one customer's real problem, often inside their messy environment.</p>
+
+  <h2>Skills interviewers look for</h2>
+  <ul>
+    <li><span class="label">Problem discovery</span>: ask what success looks like, who the users are, what data exists, and what constraints apply (security, compliance, latency) before building.</li>
+    <li><span class="label">Scoping</span>: cut a big ask into a demo-able first version in days, not months.</li>
+    <li><span class="label">Integration under uncertainty</span>: unfamiliar APIs, missing docs, odd data formats; chapter 7 is your daily life.</li>
+    <li><span class="label">Debugging in production</span>: logs, reproducing with <code>curl</code>, isolating which layer fails.</li>
+    <li><span class="label">Communication</span>: explain trade-offs to non-engineers, write clear summaries, say "I don't know yet, here's how I'll find out".</li>
+    <li><span class="label">Ownership</span>: you are the person who makes it work end to end.</li>
+  </ul>
+
+  <h2>Typical interview formats</h2>
+  <ul>
+    <li>Live integration: "Here are the docs for API X; build a small service that pulls data and answers questions about it."</li>
+    <li>Decomposition / case: "A hospital wants an assistant over its internal guidelines. Walk me through it."</li>
+    <li>Debugging: a broken repo or failing request to fix while thinking aloud.</li>
+    <li>Project deep dive: your fitness coach. Be ready for "why Qdrant?", "how did you evaluate retrieval?", "what would break at 100x users?".</li>
+  </ul>
+
+  <div class="box tip"><p><span class="label">Your project pitch (practice it):</span> "I built a RAG-based fitness coach. FastAPI backend; user biometrics in Postgres, synced from Google Health via OAuth2 with idempotent upserts; recovery protocols embedded in Qdrant. Each request combines exact user data with semantically retrieved protocols and GPT generates a cited plan. I built a golden eval set and improved recall@5 from X to Y with hybrid search and reranking."</p></div>
+</section>
+
+<!-- ============================== 15 QBANK ============================== -->
+<section class="chapter" id="qbank">
+  <h1>15. Interview question bank</h1>
+  <p>Answer out loud before reading the answer. If you can't, mark it for review.</p>
+
+  <h2>HTTP and REST</h2>
+  <dl class="qa">
+    <dt>PUT vs PATCH?</dt><dd>PUT replaces the whole resource and is idempotent; PATCH updates part of it.</dd>
+    <dt>401 vs 403?</dt><dd>401: not authenticated. 403: authenticated but not permitted.</dd>
+    <dt>What is idempotency and why does it matter?</dt><dd>Repeating a request has the same effect as doing it once. It makes retries safe on unreliable networks. For POST, use idempotency keys.</dd>
+    <dt>Which errors should a client retry?</dt><dd>429, 5xx and network errors, with exponential backoff and jitter, respecting Retry-After. Never 4xx validation or auth errors.</dd>
+    <dt>Offset vs cursor pagination?</dt><dd>Offset is simple but slow and unstable on large or changing data; cursor is stable and fast.</dd>
+    <dt>What does "stateless" mean and why care?</dt><dd>Each request contains everything needed; servers keep no client session state, so you can scale horizontally behind a load balancer.</dd>
+    <dt>How do you version an API?</dt><dd>URL prefix (/v1) or header; additive changes stay in the same version, breaking changes get a new version with a deprecation period.</dd>
+  </dl>
+
+  <h2>FastAPI and Python</h2>
+  <dl class="qa">
+    <dt>Why FastAPI?</dt><dd>Pydantic validation, auto OpenAPI docs, async support, performance; standard for ML serving.</dd>
+    <dt>What happens when the request body is invalid?</dt><dd>Pydantic validation fails and FastAPI returns 422 with details before the handler runs.</dd>
+    <dt>What is dependency injection in FastAPI and why use it?</dt><dd>Depends() runs provider functions (DB session, current user, clients) and injects results. Removes duplication and allows overriding dependencies in tests.</dd>
+    <dt>def vs async def?</dt><dd>def runs in a thread pool; async def runs on the event loop and must not block. Blocking inside async def stalls all requests.</dd>
+    <dt>How do you test an endpoint that calls OpenAI?</dt><dd>TestClient plus dependency_overrides to replace the LLM client with a fake returning fixed output.</dd>
+    <dt>How do you serve a slow LLM response well?</dt><dd>Stream tokens (SSE / StreamingResponse) for chat; for batch work return 202 with a job ID and process in a worker.</dd>
+  </dl>
+
+  <h2>Security</h2>
+  <dl class="qa">
+    <dt>Explain the OAuth2 Authorization Code flow.</dt><dd>Redirect to provider with scopes and state, user consents, provider redirects back with a code, backend exchanges code for access + refresh tokens, refresh when the access token expires. PKCE protects the code exchange.</dd>
+    <dt>What is BOLA?</dt><dd>Broken Object Level Authorization: users can access other users' objects by changing an ID. Prevent by checking ownership on every access.</dd>
+    <dt>Is a JWT encrypted?</dt><dd>No, it is signed. Anyone can read its payload; the signature only proves it wasn't tampered with.</dd>
+    <dt>How do you verify a webhook?</dt><dd>Compute an HMAC of the raw body with the shared secret and compare with compare_digest; respond fast and deduplicate by event ID.</dd>
+  </dl>
+
+  <h2>SQL</h2>
+  <dl class="qa">
+    <dt>What is an index and what does it cost?</dt><dd>A structure (usually B-tree) for fast lookups on a column; speeds reads, costs storage and slightly slower writes.</dd>
+    <dt>WHERE vs HAVING?</dt><dd>WHERE filters rows before grouping; HAVING filters groups after aggregation.</dd>
+    <dt>What is the N+1 problem?</dt><dd>One query for a list, then one query per item. Fix with JOINs or eager loading.</dd>
+    <dt>Explain ACID.</dt><dd>Atomicity, Consistency, Isolation, Durability: transactions are all-or-nothing, keep constraints valid, don't interfere, and persist after commit.</dd>
+    <dt>How do you make ingestion idempotent?</dt><dd>A unique constraint on the natural key (user_id, date) plus INSERT ... ON CONFLICT DO UPDATE.</dd>
+  </dl>
+
+  <h2>Vectors and RAG</h2>
+  <dl class="qa">
+    <dt>Training vs RAG?</dt><dd>Training changes weights (behavior, style); RAG injects retrieved context at request time (facts, fresh and private data, citations). RAG is cheaper to update and auditable.</dd>
+    <dt>What is an embedding?</dt><dd>A vector representation of text where semantic similarity becomes geometric closeness.</dd>
+    <dt>Cosine similarity vs dot product?</dt><dd>Cosine compares direction only; for normalized vectors they are identical and dot product is cheaper.</dd>
+    <dt>Why not just brute-force search?</dt><dd>Cost grows linearly with N; ANN indexes like HNSW give near-logarithmic search with a small recall trade-off.</dd>
+    <dt>Qdrant vs Pinecone vs pgvector?</dt><dd>Qdrant: open source, local or server, strong filtering. Pinecone: managed, lock-in, paid. pgvector: one DB with SQL joins, less specialized at large scale.</dd>
+    <dt>How do you choose chunk size?</dt><dd>Start with a few hundred tokens with overlap, then measure recall on a golden set; small = precise but less context, large = more context but diluted.</dd>
+    <dt>How do you evaluate a RAG system?</dt><dd>Golden set; retrieval metrics (recall@k, MRR) and generation metrics (faithfulness, relevance) via human or LLM-as-judge; run on every change.</dd>
+    <dt>Retrieval returns nothing relevant. What should happen?</dt><dd>Score threshold; the model says it lacks information instead of guessing; log the query to improve the knowledge base.</dd>
+    <dt>What is hybrid search?</dt><dd>Combining dense vector search with keyword search (BM25) and fusing results; helps with exact terms and rare words.</dd>
+    <dt>What is reranking?</dt><dd>Retrieve many candidates cheaply, then rescore with a cross-encoder that reads query and chunk together; better precision at extra latency.</dd>
+  </dl>
+
+  <h2>LLMs and system design</h2>
+  <dl class="qa">
+    <dt>What is prompt injection and how do you mitigate it?</dt><dd>Untrusted text containing instructions. Delimit data, least-privilege tools, validate outputs, enforce authorization in code.</dd>
+    <dt>How does tool calling work?</dt><dd>The model outputs a function name and arguments; your code executes it and returns the result to the model, looping until done.</dd>
+    <dt>How would you reduce LLM cost?</dt><dd>Smaller models for easy tasks, fewer/better chunks, caching, shorter prompts, batching, limiting output length, tracking tokens per request.</dd>
+    <dt>What breaks first at 100x users?</dt><dd>LLM rate limits and cost, then DB connections and sync jobs. Answer with: queues, caching, rate limits, replicas, connection pooling, monitoring.</dd>
+    <dt>How would you design ingestion from Google Health for 1M users?</dt><dd>OAuth tokens stored encrypted; webhooks plus scheduled sync; a queue with workers; per-user rate limiting and backoff; idempotent upserts; normalization adapter; monitoring of lag and failures.</dd>
+  </dl>
+</section>
+
+<!-- ============================== 16 CHECKLISTS ============================== -->
+<section class="chapter" id="checklists">
+  <h1>16. Checklists and debugging toolkit</h1>
+
+  <h2>Debugging an API problem</h2>
+  <ol>
+    <li>What is the status code?</li>
+    <li>What does the response body say?</li>
+    <li>Are the headers right (auth, content type)?</li>
+    <li>Can I reproduce it with <code>curl</code>?</li>
+    <li>What do the server logs say for this request ID?</li>
+    <li>Which layer fails: network, auth, validation, business logic, database, upstream API?</li>
+  </ol>
+<pre><code>curl -i localhost:8000/health                       # -i: show status and headers
+curl -v https://api.example.com/x                   # -v: full exchange incl. TLS
+curl -X POST localhost:8000/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"u1","question":"How should I deload?"}'</code></pre>
+  <p>Also: Postman or Bruno (GUI clients), the browser DevTools Network tab (CORS issues), FastAPI's <code>/docs</code>.</p>
+
+  <h2>Production-readiness checklist for an endpoint</h2>
+  <ul class="check">
+    <li>Input validated with Pydantic; output via <code>response_model</code></li>
+    <li>Authentication and object-level authorization</li>
+    <li>Correct status codes and a consistent error format</li>
+    <li>Timeouts and retries on every external call</li>
+    <li>Structured logging with request ID; no secrets or health data in logs</li>
+    <li>Rate limiting</li>
+    <li>Tests for the happy path and main failure cases</li>
+    <li>Documented in OpenAPI with examples</li>
+  </ul>
+
+  <h2>Phase 1 progress</h2>
+  <ul class="check">
+    <li>Step 1: archive scaffold, first commit (done)</li>
+    <li>Step 2: FastAPI app with /health and Pydantic models (done)</li>
+    <li>Step 3: mock data (protocols.json, users.json)</li>
+    <li>Step 4: embeddings + NumPy cosine similarity</li>
+    <li>Step 5: Qdrant ingestion and filtered search</li>
+    <li>Step 6: prompt assembly and generation</li>
+    <li>Step 7: POST /ask end to end with sources and scores</li>
+  </ul>
+
+  <h2>Recommended resources</h2>
+  <ul>
+    <li>FastAPI official tutorial (fastapi.tiangolo.com): read "Tutorial - User Guide" fully.</li>
+    <li>MDN Web Docs: HTTP overview, status codes, CORS.</li>
+    <li>OWASP API Security Top 10.</li>
+    <li>SQLBolt or PostgreSQL tutorial for hands-on SQL; "Use The Index, Luke" for indexes.</li>
+    <li>Qdrant documentation: concepts (collections, points, payload, filtering, HNSW).</li>
+    <li>OpenAI API docs: embeddings, structured outputs, function calling.</li>
+    <li>Chip Huyen, "AI Engineering" (book) and "Designing Machine Learning Systems".</li>
+    <li>Alex Xu, "System Design Interview" for the general framework.</li>
+  </ul>
+</section>
+
+</body>
+</html>
