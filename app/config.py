@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     qdrant_collection: str = "protocols"
     rag_top_k: int = 3
 
+    # Off for local use. When on, every /users and /ask request needs `Authorization: Bearer <token>`
+    # (issued by scripts/issue_token.py) and can only touch the token owner's data.
+    auth_enabled: bool = False
+    ask_rate_limit_per_minute: int = 20
+    openai_timeout_seconds: float = 30.0
+
 
 @lru_cache
 def get_settings() -> Settings:

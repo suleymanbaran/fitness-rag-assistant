@@ -1,7 +1,8 @@
-"""Embed data/protocols.json and load it into the embedded Qdrant database.
+"""Embed data/protocols.json and load it into Qdrant.
 
 Usage: python -m scripts.ingest [--query "..."] [--category recovery]
-Stop the API server first: embedded Qdrant allows only one process to open the data folder.
+With QDRANT_URL set (the Docker Qdrant server) this can run while the API is up. Without it,
+embedded Qdrant allows only one process to open the data folder, so stop the API first.
 """
 
 import argparse
@@ -24,10 +25,11 @@ def main() -> None:
     embedder = Embedder(OpenAI(api_key=settings.openai_api_key), settings.embedding_model)
     client = connect_qdrant(settings)
     store = ProtocolStore(client, settings.qdrant_collection)
+    location = settings.qdrant_url or settings.qdrant_path
 
     try:
         count = ingest_protocols(embedder, store)
-        print(f"Ingested {count} protocols into '{settings.qdrant_collection}' at {settings.qdrant_path}\n")
+        print(f"Ingested {count} protocols into '{settings.qdrant_collection}' at {location}\n")
 
         hits = store.search(embedder.embed_one(args.query), top_k=settings.rag_top_k, category=args.category)
         print(f"Sample search: {args.query!r} (category={args.category})")

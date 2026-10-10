@@ -17,6 +17,8 @@ class User(Base):
     age: Mapped[int | None] = mapped_column(Integer)
     weight_kg: Mapped[float | None] = mapped_column(Float)
     goal: Mapped[str] = mapped_column(String(40), default="general_fitness")
+    # SHA-256 of the user's API token; the token itself is never stored.
+    api_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     biometrics: Mapped[list["DailyBiometrics"]] = relationship(back_populates="user", cascade="all, delete-orphan")

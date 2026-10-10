@@ -1,6 +1,11 @@
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, Field, model_validator
 
 from app.data_access.protocols import Category
+
+Goal = Literal["strength", "muscle_gain", "fat_loss", "endurance", "general_fitness"]
+USER_ID_PATTERN = r"^[a-z0-9_-]{1,64}$"
 
 
 class AskRequest(BaseModel):
@@ -18,6 +23,28 @@ class UserSummary(BaseModel):
     user_id: str
     name: str
     goal: str
+
+
+class ProfileIn(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120, examples=["Suleyman"])
+    age: int | None = Field(None, ge=10, le=110)
+    weight_kg: float | None = Field(None, gt=20, lt=400)
+    goal: Goal = "general_fitness"
+
+
+class DayMetricsIn(BaseModel):
+    """Only the metrics you send are written; omitted ones keep their stored value."""
+
+    hrv_ms: float | None = Field(None, gt=0, lt=400)
+    sleep_score: int | None = Field(None, ge=0, le=100)
+    resting_hr_bpm: int | None = Field(None, ge=20, le=250)
+    calories_kcal: int | None = Field(None, ge=0, le=20000)
+
+    @model_validator(mode="after")
+    def at_least_one_metric(self) -> "DayMetricsIn":
+        if all(v is None for v in self.model_dump().values()):
+            raise ValueError("Send at least one metric")
+        return self
 
 
 class Source(BaseModel):

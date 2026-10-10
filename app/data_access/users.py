@@ -71,5 +71,13 @@ def get_user(db: Session, user_id: str) -> UserProfile | None:
     )
 
 
+def upsert_user(
+    db: Session, user_id: str, name: str, age: int | None, weight_kg: float | None, goal: str
+) -> None:
+    user = db.get(User, user_id) or User(id=user_id)
+    user.name, user.age, user.weight_kg, user.goal = name, age, weight_kg, goal
+    db.add(user)
+
+
 def list_users(db: Session) -> list[User]:
     return list(db.scalars(select(User).order_by(User.id)))

@@ -1,31 +1,16 @@
+from datetime import date, timedelta
 from types import SimpleNamespace
 
-import pytest
+import httpx
 from fastapi.testclient import TestClient
+from openai import APIConnectionError
 from qdrant_client import QdrantClient
 
 from app.config import get_settings
-from app.main import app, get_embedder, get_generator, get_store
+from app.main import app, get_store
 from app.rag.demo import PromptEchoGenerator
 from app.rag.generator import Generator
-from app.rag.ingestion import ingest_protocols
 from app.rag.vector_store import ProtocolStore
-from tests.fakes import FakeEmbedder, FakeGenerator
-
-
-@pytest.fixture
-def fakes():
-    embedder = FakeEmbedder()
-    generator = FakeGenerator()
-    store = ProtocolStore(QdrantClient(":memory:"), "protocols")
-    ingest_protocols(embedder, store)
-
-    app.dependency_overrides[get_embedder] = lambda: embedder
-    app.dependency_overrides[get_generator] = lambda: generator
-    app.dependency_overrides[get_store] = lambda: store
-    # No `with TestClient(...)`: the lifespan (real OpenAI and on-disk Qdrant) is skipped.
-    yield SimpleNamespace(client=TestClient(app), generator=generator, store=store)
-    app.dependency_overrides.clear()
 
 
 def test_health(fakes):
@@ -82,6 +67,16 @@ def test_empty_knowledge_base_returns_503(fakes):
     assert r.status_code == 503
 
 
+def test_openai_failure_returns_502(fakes, monkeypatch):
+    def fail(messages):
+        raise APIConnectionError(request=httpx.Request("POST", "https://api.openai.com/v1/chat/completions"))
+
+    monkeypatch.setattr(fakes.generator, "generate", fail)
+    r = fakes.client.post("/ask", json={"user_id": "u1", "question": "Hello coach"})
+    assert r.status_code == 502
+    assert r.json()["detail"] == "The AI service failed. Try again in a moment."
+
+
 def test_users_list_and_detail(fakes):
     users = fakes.client.get("/users").json()
     assert {u["user_id"] for u in users} == {"u1", "u2"}
@@ -93,7 +88,44 @@ def test_users_list_and_detail(fakes):
     assert fakes.client.get("/users/nobody").status_code == 404
 
 
-def test_demo_mode_runs_full_app_without_openai(monkeypatch):
+def test_create_profile_and_log_days(fakes):
+    r = fakes.client.put("/users/me", json={"name": "Suleyman", "age": 30, "weight_kg": 78.5, "goal": "strength"})
+    assert r.status_code == 200
+    assert r.json()["days"] == []
+    assert "me" in {u["user_id"] for u in fakes.client.get("/users").json()}
+
+    yesterday, today = date.today() - timedelta(days=1), date.today()
+    fakes.client.put(f"/users/me/days/{yesterday}", json={"hrv_ms": 70, "sleep_score": 85, "resting_hr_bpm": 52})
+    r = fakes.client.put(f"/users/me/days/{today}", json={"hrv_ms": 56})
+    assert r.status_code == 200
+    assert r.json()["hrv_ms"] == 56 and r.json()["hrv_baseline_ms"] == 70
+
+    # A second, partial log for the same day fills in calories without erasing HRV.
+    r = fakes.client.put(f"/users/me/days/{today}", json={"calories_kcal": 2400})
+    assert (r.json()["hrv_ms"], r.json()["calories_kcal"]) == (56, 2400)
+
+    fakes.client.post("/ask", json={"user_id": "me", "question": "Should I train hard today?"})
+    _, user = fakes.generator.last_messages
+    assert f"Today ({today}) compared with the previous 1-day baseline" in user["content"]
+    assert "HRV 56.0 ms vs 70.0 ms (-20.0%)" in user["content"]
+
+
+def test_profile_update_keeps_logged_days(fakes):
+    r = fakes.client.put("/users/u1", json={"name": "Ali", "age": 28, "weight_kg": 83, "goal": "muscle_gain"})
+    assert r.json()["goal"] == "muscle_gain"
+    assert len(r.json()["days"]) == 7
+
+
+def test_log_day_validation(fakes):
+    today = date.today()
+    assert fakes.client.put(f"/users/nobody/days/{today}", json={"hrv_ms": 50}).status_code == 404
+    assert fakes.client.put(f"/users/u1/days/{today}", json={}).status_code == 422
+    assert fakes.client.put(f"/users/u1/days/{today}", json={"sleep_score": 140}).status_code == 422
+    assert fakes.client.put(f"/users/u1/days/{today + timedelta(days=1)}", json={"hrv_ms": 50}).status_code == 422
+    assert fakes.client.put("/users/Bad%20Id", json={"name": "x"}).status_code == 422
+
+
+def test_demo_mode_runs_full_app_without_openai(monkeypatch, db_session):
     monkeypatch.setenv("DEMO_MODE", "true")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     get_settings.cache_clear()

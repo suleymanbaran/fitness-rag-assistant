@@ -3,12 +3,14 @@
 Usage: python -m scripts.seed
 """
 
+import argparse
 import json
 from datetime import date
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.data_access.biometrics import upsert_daily_metrics
 from app.db.models import User
 from app.db.session import get_sessionmaker
@@ -37,6 +39,12 @@ def seed_demo_users(db: Session) -> int:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true", help="Seed even when AUTH_ENABLED=true")
+    args = parser.parse_args()
+    if get_settings().auth_enabled and not args.force:
+        parser.error("AUTH_ENABLED=true looks like a deployment; demo users do not belong there (use --force)")
+
     with get_sessionmaker()() as db:
         count = seed_demo_users(db)
     print(f"Seeded {count} demo users")

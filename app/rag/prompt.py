@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.data_access.users import DailyMetrics, UserProfile
 from app.rag.vector_store import RetrievedChunk
 
@@ -41,9 +43,10 @@ def format_user_context(user: UserProfile) -> str:
             f"resting HR {_fmt(d.resting_hr_bpm, ' bpm')}, calories {_fmt(d.calories_kcal, ' kcal')}"
         )
 
+    latest = "Today" if today.date == date.today() else "Latest day on file"
     lines = [
         f"User: {user.name}, {_fmt(user.age, ' years')}, {_fmt(user.weight_kg, ' kg')}, goal: {user.goal}",
-        f"Today ({today.date}) compared with the previous {today.baseline_days}-day baseline:",
+        f"{latest} ({today.date}) compared with the previous {today.baseline_days}-day baseline:",
         f"  HRV {_fmt(today.hrv_ms, ' ms')} vs {_fmt(hrv_base, ' ms')} ({_pct_change(today.hrv_ms, hrv_base)})",
         f"  Resting HR {_fmt(today.resting_hr_bpm, ' bpm')} vs {_fmt(rhr_base, ' bpm')}",
         f"  Sleep score {_fmt(today.sleep_score)} vs {_fmt(sleep_base)}",
