@@ -166,9 +166,13 @@ Google's [get started guide](https://developers.google.com/health):
    linked to as a test user. Add these scopes:
    - `https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly`
    - `https://www.googleapis.com/auth/googlehealth.sleep.readonly`
-3. Create an OAuth client of type **Web application**. Authorized redirect URI:
-   `http://localhost:8000/integrations/google/callback`
+3. Create an OAuth client of type **Web application**. Google's form requires `https`, so start
+   `python -m scripts.local_https` (it forwards `https://localhost:8443` to the API) and use this
+   authorized redirect URI:
+   `https://localhost:8443/integrations/google/callback`
    (in production: `https://<your-domain>/integrations/google/callback`).
+   Set `PUBLIC_API_URL=https://localhost:8443` in `.env` so the app sends Google that same address.
+   The certificate is self-signed; the first time the browser returns from Google, continue past the warning.
 4. Put the client ID and secret in `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
 While the app stays in Testing, Google expires the refresh token after 7 days, so Connect has to be

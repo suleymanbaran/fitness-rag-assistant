@@ -137,9 +137,14 @@ class FakeFatSecret:
         self.diary_dates: list[int] = []
 
     def handler(self, request: httpx.Request) -> httpx.Response:
-        params = request.url.params
+        params = dict(request.url.params)
+        if request.content:
+            for key, values in parse_qs(request.content.decode()).items():
+                params[key] = values[0]
         assert "oauth_signature" in params, "every FatSecret request must be signed"
         if request.url.path == "/oauth/request_token":
+            assert request.method == "POST"
+            assert "oauth_signature" not in request.url.params
             assert params["oauth_callback"].endswith("/integrations/fatsecret/callback")
             return httpx.Response(200, text="oauth_token=req-tok&oauth_token_secret=req-sec&oauth_callback_confirmed=true")
         if request.url.path == "/oauth/access_token":

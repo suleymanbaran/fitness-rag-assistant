@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from urllib.parse import parse_qsl, urlencode
 
 import httpx
-from oauthlib.oauth1 import SIGNATURE_TYPE_QUERY, Client
+from oauthlib.oauth1 import SIGNATURE_TYPE_BODY, SIGNATURE_TYPE_QUERY, Client
 
 from app.integrations.common import IntegrationError, ReauthRequired, request_with_retry
 
@@ -31,14 +31,27 @@ class FatSecretClient:
 
     def start_authorization(self, callback_url: str) -> tuple[str, str, str]:
         """Step 1-2: get a request token. Returns (URL to send the user to, request token, request secret)."""
+        # FatSecret verifies this POST against the form body. The same signature in the
+        # query string is rejected as invalid.
         client = Client(
             self.consumer_key,
             client_secret=self.consumer_secret,
             callback_uri=callback_url,
-            signature_type=SIGNATURE_TYPE_QUERY,
+            signature_type=SIGNATURE_TYPE_BODY,
         )
-        uri, _, _ = client.sign(REQUEST_TOKEN_URL, http_method="POST")
-        response = request_with_retry(self.http, "POST", uri)
+        uri, _, body = client.sign(
+            REQUEST_TOKEN_URL,
+            http_method="POST",
+            body="",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        response = request_with_retry(
+            self.http,
+            "POST",
+            uri,
+            content=body,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
         if response.is_error:
             raise IntegrationError(f"FatSecret request token failed ({response.status_code}): {response.text[:120]}")
         values = dict(parse_qsl(response.text))
