@@ -6,8 +6,13 @@ advice, grounded in vetted recovery and nutrition protocols and citing every sou
 **Stack:** Python, FastAPI, PostgreSQL (SQLAlchemy, Alembic), Qdrant, OpenAI (`text-embedding-3-small`,
 `gpt-4o-mini`), Streamlit, Docker, Caddy.
 
-<!-- Add a screenshot of the chat answering a question: docs/screenshot.png
-![Chat UI](docs/screenshot.png) -->
+![Dashboard: daily HRV, sleep, resting heart rate, calories, and the Google Health and FatSecret connect buttons](docs/dashboard.png)
+
+![Coach answer to "Should I run today?", citing the protocols it used](docs/chat.png)
+
+These screenshots are the seeded demo profile. Google Health is in Testing mode, so only Google
+accounts on the project's test-user list can connect a Fitbit. Anyone can ask the coach questions
+and log days without connecting Google Health or FatSecret.
 
 ## What it does
 
@@ -15,6 +20,9 @@ advice, grounded in vetted recovery and nutrition protocols and citing every sou
   with window functions, and puts the exact numbers in the prompt.
 - **Grounded answers:** retrieves the most relevant protocols from a vector database and instructs
   the model to answer only from them, cite them by ID, and flag medical red flags.
+- **Wearable and nutrition sync:** connects Fitbit data through the Google Health API (OAuth 2.0) and
+  the FatSecret food diary (OAuth 1.0), with encrypted tokens, automatic refresh, retries and idempotent upserts.
+  Google Health only accepts accounts listed as test users while the app is unverified.
 - **Measured retrieval:** a labeled question set scores search with hit rate, recall and MRR at k.
 - **Production basics:** per-user token auth with object-level access checks, rate limiting on the
   LLM endpoint, upstream timeouts, request IDs in logs (no health data), Docker deployment behind HTTPS.
@@ -24,9 +32,13 @@ advice, grounded in vetted recovery and nutrition protocols and citing every sou
 
 ```mermaid
 flowchart LR
+  fitbit[Fitbit] --> google["Google Health API"]
+  diary[FatSecret food diary] --> fatsecret[FatSecret API]
+  google -->|"HRV, resting HR, sleep"| postgres
+  fatsecret -->|calories| postgres
   question[Question] --> embed[Embed]
   embed --> qdrant["Qdrant: top-k protocols"]
-  userId[user_id] --> postgres["Postgres: profile, daily metrics, 7-day baselines"]
+  userId[user_id] --> postgres["Postgres: daily metrics, 7-day baselines"]
   qdrant --> prompt[Prompt]
   postgres --> prompt
   prompt --> llm[gpt-4o-mini]
@@ -39,14 +51,23 @@ flowchart LR
   Biometrics are exact numbers, queried in Postgres. Similarity search would blur the numbers.
 - **RAG instead of fine-tuning.** Metrics change daily and advice must trace back to a source.
   Updating knowledge means re-embedding a document, not retraining a model.
-- **Idempotent daily upserts.** One row per user per day with a unique constraint, so re-logging or
-  a future wearable sync updates the day instead of duplicating it, and only overwrites the fields sent.
+- **Idempotent daily upserts.** One row per user per day with a unique constraint, so re-logging or a
+  sync updates the day instead of duplicating it, and only overwrites the fields that were sent.
+  Google and FatSecret can therefore fill the same day without erasing each other.
 - **Evaluation before tuning.** Chunking and top-k stay unchanged until the eval says retrieval is weak.
 
-<!-- Fill in after: python -m scripts.eval_retrieval
 ## Results
 
-Retrieval on 26 labeled questions (OpenAI embeddings): hit rate X at k=3, MRR Y. -->
+Retrieval on 26 labeled questions over 12 protocols (`python -m scripts.eval_retrieval`):
+
+| Embeddings | Hit rate @1 | Hit rate @3 | Recall @3 | MRR |
+|---|---|---|---|---|
+| OpenAI `text-embedding-3-small` | 0.88 | 1.00 | 0.99 | 0.94 |
+| Word-hashing baseline (offline) | 0.38 | 0.81 | 0.78 | 0.57 |
+
+Semantic embeddings find the right protocol for questions that share no keywords with it
+(for example "almost passed out at rest" retrieves the medical red-flags protocol).
+The knowledge base is small, so these numbers show the method works; they will drop as protocols grow.
 
 ## Project layout
 
@@ -63,6 +84,7 @@ Retrieval on 26 labeled questions (OpenAI embeddings): hit rate X at k=3, MRR Y.
 | `app/rag/generator.py` | Chat completion call |
 | `app/rag/demo.py` | Offline stand-ins for OpenAI (demo mode and tests) |
 | `app/main.py` | FastAPI app: `POST /ask`, `/users` endpoints |
+| `app/integrations/` | Google Health and FatSecret clients, OAuth flows, token encryption, sync |
 | `ui/streamlit_app.py` | Chat UI with metrics and charts; calls the API over HTTP |
 | `migrations/` | Alembic schema migrations |
 | `scripts/ingest.py` | Embed protocols and load them into Qdrant |
@@ -102,8 +124,9 @@ Postgres still has to be running. Nothing is sent to OpenAI.
 
 ## Make it yours
 
-In the UI sidebar, open **New profile** to create yourself, then **Log a day** each morning
-(HRV, sleep score, resting HR, calories; any subset). Re-logging a day only overwrites the fields you fill in.
+In the UI sidebar, open **New profile** to create yourself. Then either connect Fitbit and FatSecret
+(next section) or type a day under **Log a day** (HRV, sleep score, time asleep, resting HR, calories;
+any subset). Re-logging a day only overwrites the fields you fill in.
 The coach compares your latest day with the previous 7 days, and the UI warns when today is not logged yet.
 
 The same over HTTP:
@@ -114,6 +137,80 @@ curl -X PUT localhost:8000/users/me -H 'Content-Type: application/json' \
 curl -X PUT localhost:8000/users/me/days/2026-10-10 -H 'Content-Type: application/json' \
   -d '{"hrv_ms": 58, "sleep_score": 71, "resting_hr_bpm": 56}'
 ```
+
+## Connect your data (Google Health API and FatSecret)
+
+Fitbit does not have its own API anymore. Its data is read through the
+[Google Health API](https://developers.google.com/health), the successor of the Fitbit Web API.
+Calories come from the [FatSecret Platform API](https://platform.fatsecret.com).
+Typing a day still works, and a later sync only overwrites the fields that provider owns.
+
+**Who can connect.** The Google Cloud app stays in Testing. Only Google accounts added under
+**Google Auth Platform → Audience → Test users** can approve Fitbit access (up to 100 accounts).
+Those health scopes stay limited to that list until Google verifies the app. A reviewer who is not
+on the list uses the demo profile instead. FatSecret has no test-user list: whoever approves the
+app on fatsecret.com can sync a diary, once the project's consumer key is configured.
+
+| | Google Health API | FatSecret Platform API |
+|---|---|---|
+| What we read | `daily-heart-rate-variability` (RMSSD, ms), `daily-resting-heart-rate` (bpm), `sleep` (`minutesAsleep` of the main sleep) | `food_entries.get.v2`: the day's diary entries, summed to kcal |
+| Where it lands | `hrv_ms`, `resting_hr_bpm`, `sleep_minutes` | `calories_kcal` |
+| Login | Google OAuth 2.0, read-only scopes, refresh token | 3-legged OAuth 1.0 (HMAC-SHA1). FatSecret's OAuth 2.0 cannot act for a user |
+| Endpoint | `GET https://health.googleapis.com/v4/users/me/dataTypes/{type}/dataPoints` | `GET https://platform.fatsecret.com/rest/food-entries/v2` |
+| Code | `app/integrations/google_health.py` | `app/integrations/fatsecret.py` |
+
+Google has no Fitbit sleep *score*, so synced sleep is stored as hours asleep. A day with a nap and a
+night's sleep keeps the session Google marks as the main sleep. A FatSecret day with no diary entries
+is skipped, so "not logged" is never stored as 0 kcal.
+
+Both logins are Fernet-encrypted in `integration_accounts` and never written to logs. Google access
+tokens last about an hour and are refreshed automatically; if Google or FatSecret rejects the stored
+login, sync reports it and the UI asks you to connect again.
+
+**1. Encryption key.** Run `python -m scripts.generate_key` and put the output in `.env` as
+`TOKEN_ENCRYPTION_KEY`. Losing this key means reconnecting both providers.
+
+**2. Google Health.** In the [Google Cloud console](https://console.cloud.google.com), following
+Google's [get started guide](https://developers.google.com/health):
+
+1. Create a project and enable the **Google Health API** (APIs & Services, Library).
+2. OAuth consent screen: user type External, app in Testing. Add the Google account your Fitbit is
+   linked to as a test user. Add these scopes:
+   - `https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly`
+   - `https://www.googleapis.com/auth/googlehealth.sleep.readonly`
+3. Create an OAuth client of type **Web application**. Google's form requires `https`, so start
+   `python -m scripts.local_https` (it forwards `https://localhost:8443` to the API) and use this
+   authorized redirect URI:
+   `https://localhost:8443/integrations/google/callback`
+   (in production: `https://<your-domain>/integrations/google/callback`).
+   Set `PUBLIC_API_URL=https://localhost:8443` in `.env` so the app sends Google that same address.
+   The certificate is self-signed; the first time the browser returns from Google, continue past the warning.
+4. Put the client ID and secret in `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+While the app stays in Testing, Google expires the refresh token after 7 days, so Connect has to be
+pressed again weekly until the app is verified.
+
+**3. FatSecret.** Register an app at [platform.fatsecret.com](https://platform.fatsecret.com) and copy
+the OAuth 1.0 **Consumer Key** and **Consumer Secret** into `.env` as `FATSECRET_CONSUMER_KEY` and
+`FATSECRET_CONSUMER_SECRET`. Two limits from FatSecret's side:
+
+- The app may only accept calls from IP addresses you allowlist.
+- `food_entries.get` is marked Premier-only. On a free key, sync returns FatSecret's error instead of
+  calories; HRV, heart rate and sleep from Google still sync.
+
+The connect flow is FatSecret's [3-legged OAuth](https://platform.fatsecret.com/docs/guides/authentication/oauth1/three-legged):
+request token, you approve on fatsecret.com, then the callback at
+`/integrations/fatsecret/callback` exchanges it for a token that does not expire.
+
+**4. Sync.** Restart the API so it reads the new `.env`. In the sidebar open **Connected apps**,
+press Connect, approve access, then **Sync now** (last 14 days). Repeat syncs are safe.
+
+```bash
+python -m scripts.sync --user-id me --days 14     # same thing from the terminal
+```
+
+The production stack runs `scripts.sync` every 3 hours. `POST /users/{id}/sync?days=14` does one sync
+over HTTP and returns, per provider, how many days changed or why it failed.
 
 ## Check retrieval quality
 
@@ -126,7 +223,7 @@ python -m scripts.eval_retrieval --demo     # offline hashing embedder, for comp
 
 It prints hit rate, recall and MRR at k = 1, 3, 5, plus every question missed at `RAG_TOP_K`.
 Run it before and after changing protocols, chunking, top-k or the embedding model; change those
-only when the score says retrieval is weak. Offline baseline (hashing embedder): hit rate 0.81 at k=3.
+only when the score says retrieval is weak. Current scores are in [Results](#results).
 
 ## Going live (only when you need it off this machine)
 
@@ -145,6 +242,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec api \
 
 Open `https://<DOMAIN>` and sign in with the token. In production:
 
+- Register `https://<DOMAIN>/integrations/google/callback` as the Google redirect URI, and put the
+  same provider credentials plus `TOKEN_ENCRYPTION_KEY` in `.env.prod`. Caddy forwards only the
+  `/integrations/*/callback` paths to the API; a `sync` service pulls the last 3 days every 3 hours.
 - `AUTH_ENABLED=true`: every `/users` and `/ask` call needs `Authorization: Bearer <token>` and can
   only read or change the token owner's data (401 without a valid token, 403 for someone else's).
 - `/ask` is limited to `ASK_RATE_LIMIT_PER_MINUTE` per user (429 with `Retry-After`).
@@ -162,4 +262,5 @@ python -m pytest -q
 ```
 
 Tests use a separate `fitness_coach_test` database (created automatically, every test rolled back),
-an in-memory Qdrant, and fake embedder/generator, so they need no API key and never touch your data.
+an in-memory Qdrant, and fake embedder, generator and provider APIs, so they need no API key and
+never call Google, FatSecret or OpenAI.

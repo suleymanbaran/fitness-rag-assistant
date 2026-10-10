@@ -5,6 +5,8 @@ x-app-env: &app-env
   DATABASE_URL: postgresql+psycopg://coach:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}@postgres:5432/fitness_coach
   QDRANT_URL: http://qdrant:6333
   AUTH_ENABLED: "true"
+  PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN in .env.prod}
+  UI_URL: https://${DOMAIN}
 
 services:
   postgres:
@@ -44,6 +46,17 @@ services:
     build: .
     env_file: .env.prod
     environment: *app-env
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Pulls the last 3 days from every connected provider every 3 hours.
+  sync:
+    build: .
+    env_file: .env.prod
+    environment: *app-env
+    command: ["sh", "-c", "while true; do python -m scripts.sync --days 3; sleep 10800; done"]
     depends_on:
       setup:
         condition: service_completed_successfully

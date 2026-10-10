@@ -113,16 +113,78 @@ def log_day_form(user_id: str) -> None:
         day = st.date_input("Date", value=date.today(), max_value=date.today())
         hrv = st.number_input("HRV (ms)", min_value=1.0, max_value=399.0, step=1.0, value=None)
         sleep = st.number_input("Sleep score (0-100)", min_value=0, max_value=100, value=None)
+        hours = st.number_input("Time asleep (hours)", min_value=0.0, max_value=24.0, step=0.25, value=None)
         rhr = st.number_input("Resting HR (bpm)", min_value=20, max_value=250, value=None)
         kcal = st.number_input("Calories (kcal)", min_value=0, max_value=20000, step=50, value=None)
         st.caption("Leave a field empty to keep its stored value.")
         if st.form_submit_button("Save day"):
-            metrics = {"hrv_ms": hrv, "sleep_score": sleep, "resting_hr_bpm": rhr, "calories_kcal": kcal}
+            metrics = {
+                "hrv_ms": hrv,
+                "sleep_score": sleep,
+                "sleep_minutes": round(hours * 60) if hours is not None else None,
+                "resting_hr_bpm": rhr,
+                "calories_kcal": kcal,
+            }
             payload = {k: v for k, v in metrics.items() if v is not None}
             if not payload:
                 st.error("Enter at least one metric.")
             else:
                 save(f"/users/{user_id}/days/{day}", payload, f"Metrics for {day} saved")
+
+
+PROVIDER_NAMES = {"google": "Google Health (Fitbit)", "fatsecret": "FatSecret"}
+PROVIDER_DATA = {"google": "HRV, resting heart rate, time asleep", "fatsecret": "calories from your food diary"}
+
+
+def api_call(method: str, path: str, **kwargs) -> httpx.Response:
+    return httpx.request(method, f"{API_URL}{path}", headers=auth_headers(token()), timeout=60, **kwargs)
+
+
+def connections_panel(user_id: str) -> None:
+    response = api_call("GET", f"/users/{user_id}/integrations")
+    if response.is_error:
+        st.caption(f"Could not load connections ({response.status_code}).")
+        return
+    statuses = response.json()
+
+    for status in statuses:
+        provider = status["provider"]
+        st.markdown(f"**{PROVIDER_NAMES[provider]}**  \n{PROVIDER_DATA[provider]}")
+        if not status["configured"]:
+            st.caption("Not set up on the server yet (see README, Connect your data).")
+        elif status["connected"]:
+            synced = status["last_synced_at"]
+            st.caption(f"Connected. Last sync: {synced[:16].replace('T', ' ') if synced else 'never'}")
+            if status["last_error"]:
+                st.error(status["last_error"])
+            if st.button("Disconnect", key=f"disconnect_{provider}"):
+                api_call("DELETE", f"/users/{user_id}/integrations/{provider}")
+                st.rerun()
+        else:
+            url_key = f"connect_url_{user_id}_{provider}"
+            if url := st.session_state.get(url_key):
+                st.link_button(f"Approve access on {PROVIDER_NAMES[provider]}", url, type="primary")
+                st.caption("After approving you'll come back here. Then press Sync now.")
+            elif st.button("Connect", key=f"connect_{provider}"):
+                r = api_call("POST", f"/users/{user_id}/integrations/{provider}/connect")
+                if r.is_error:
+                    st.error(f"Could not start connecting ({r.status_code}): {error_detail(r)}")
+                else:
+                    st.session_state[url_key] = r.json()["authorization_url"]
+                    st.rerun()
+
+    if any(s["connected"] for s in statuses) and st.button("Sync now", type="primary"):
+        with st.spinner("Pulling your data..."):
+            r = api_call("POST", f"/users/{user_id}/sync", params={"days": 14})
+        if r.is_error:
+            st.error(f"Sync failed ({r.status_code}): {error_detail(r)}")
+            return
+        messages = [
+            f"{PROVIDER_NAMES[x['provider']]}: " + (x["error"] or f"{x['days_updated']} days updated") for x in r.json()
+        ]
+        fetch_user.clear()
+        st.session_state["flash"] = " | ".join(messages)
+        st.rerun()
 
 
 def render_sources(sources: list[dict]) -> None:
@@ -163,6 +225,14 @@ except httpx.HTTPError:
 if flash := st.session_state.pop("flash", None):
     st.toast(flash)
 
+# Set by the API when the browser returns from a provider's consent page.
+if connected := st.query_params.get("connected"):
+    st.success(f"{PROVIDER_NAMES.get(connected, connected)} connected. Press Sync now in the sidebar.")
+    st.query_params.clear()
+elif integration_error := st.query_params.get("integration_error"):
+    st.error(f"Connection failed: {integration_error}")
+    st.query_params.clear()
+
 with st.sidebar:
     st.header("Settings")
     labels = {u["user_id"]: f"{u['name']} ({u['goal'].replace('_', ' ')})" for u in users}
@@ -182,6 +252,8 @@ days = sorted(profile["days"], key=lambda d: d["date"])
 logged_today = bool(days) and days[-1]["date"] == date.today().isoformat()
 
 with st.sidebar:
+    with st.expander("Connected apps"):
+        connections_panel(user_id)
     with st.expander("Log a day", expanded=not logged_today):
         log_day_form(user_id)
     with st.expander("Edit profile"):
@@ -208,15 +280,20 @@ if not days:
 else:
     if not logged_today:
         st.warning(f"Nothing logged for today yet. The coach will use your latest day ({days[-1]['date']}).")
-    cols = st.columns(4)
-    with cols[0]:
-        metric_vs_baseline("HRV", days, "hrv_ms", " ms", delta_color="normal")
-    with cols[1]:
-        metric_vs_baseline("Sleep score", days, "sleep_score", "/100", delta_color="normal")
-    with cols[2]:
-        metric_vs_baseline("Resting HR", days, "resting_hr_bpm", " bpm", delta_color="inverse")
-    with cols[3]:
-        metric_vs_baseline("Calories", days, "calories_kcal", " kcal", delta_color="off")
+    for d in days:
+        d["sleep_hours"] = round(d["sleep_minutes"] / 60, 1) if d.get("sleep_minutes") is not None else None
+    metrics = [
+        ("HRV", "hrv_ms", " ms", "normal"),
+        ("Sleep score", "sleep_score", "/100", "normal"),
+        ("Time asleep", "sleep_hours", " h", "normal"),
+        ("Resting HR", "resting_hr_bpm", " bpm", "inverse"),
+        ("Calories", "calories_kcal", " kcal", "off"),
+    ]
+    # Hide metrics that were never recorded (e.g. sleep score once sleep comes from Google as hours).
+    metrics = [m for m in metrics if any(d.get(m[1]) is not None for d in days)]
+    for col, (label, key, unit, delta_color) in zip(st.columns(len(metrics)), metrics):
+        with col:
+            metric_vs_baseline(label, days, key, unit, delta_color=delta_color)
 
     chart = pd.DataFrame(days).set_index("date")
     left, right = st.columns(2)

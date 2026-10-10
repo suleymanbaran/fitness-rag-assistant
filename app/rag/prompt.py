@@ -37,11 +37,14 @@ def format_user_context(user: UserProfile) -> str:
     rhr_base = today.resting_hr_baseline_bpm
     sleep_base = today.sleep_baseline
 
+    has_duration = any(d.sleep_minutes is not None for d in days)
+
     def day_line(d: DailyMetrics) -> str:
-        return (
+        line = (
             f"  {d.date}: HRV {_fmt(d.hrv_ms, ' ms')}, sleep {_fmt(d.sleep_score, '/100')}, "
             f"resting HR {_fmt(d.resting_hr_bpm, ' bpm')}, calories {_fmt(d.calories_kcal, ' kcal')}"
         )
+        return line + f", slept {_hours(d.sleep_minutes)}" if has_duration else line
 
     latest = "Today" if today.date == date.today() else "Latest day on file"
     lines = [
@@ -50,10 +53,18 @@ def format_user_context(user: UserProfile) -> str:
         f"  HRV {_fmt(today.hrv_ms, ' ms')} vs {_fmt(hrv_base, ' ms')} ({_pct_change(today.hrv_ms, hrv_base)})",
         f"  Resting HR {_fmt(today.resting_hr_bpm, ' bpm')} vs {_fmt(rhr_base, ' bpm')}",
         f"  Sleep score {_fmt(today.sleep_score)} vs {_fmt(sleep_base)}",
-        "Daily log (oldest first):",
-        *(day_line(d) for d in days),
     ]
+    if has_duration:
+        lines.append(f"  Time asleep {_hours(today.sleep_minutes)} vs {_hours(today.sleep_minutes_baseline)}")
+    lines += ["Daily log (oldest first):", *(day_line(d) for d in days)]
     return "\n".join(lines)
+
+
+def _hours(minutes: float | None) -> str:
+    if minutes is None:
+        return "n/a"
+    total = round(minutes)
+    return f"{total // 60}h {total % 60:02d}m"
 
 
 def format_chunks(chunks: list[RetrievedChunk]) -> str:

@@ -14,11 +14,13 @@ class DailyMetrics(BaseModel):
     date: date
     hrv_ms: float | None = None
     sleep_score: int | None = None
+    sleep_minutes: int | None = None
     resting_hr_bpm: int | None = None
     calories_kcal: int | None = None
     # Averages over the previous BASELINE_DAYS days, excluding this day. Computed in SQL.
     hrv_baseline_ms: float | None = None
     sleep_baseline: float | None = None
+    sleep_minutes_baseline: float | None = None
     resting_hr_baseline_bpm: float | None = None
     baseline_days: int = 0
 
@@ -43,10 +45,12 @@ def get_user_days(db: Session, user_id: str) -> list[DailyMetrics]:
             DailyBiometrics.date,
             DailyBiometrics.hrv_ms,
             DailyBiometrics.sleep_score,
+            DailyBiometrics.sleep_minutes,
             DailyBiometrics.resting_hr_bpm,
             DailyBiometrics.calories_kcal,
             _rolling_avg(DailyBiometrics.hrv_ms).label("hrv_baseline_ms"),
             _rolling_avg(DailyBiometrics.sleep_score).label("sleep_baseline"),
+            _rolling_avg(DailyBiometrics.sleep_minutes).label("sleep_minutes_baseline"),
             _rolling_avg(DailyBiometrics.resting_hr_bpm).label("resting_hr_baseline_bpm"),
             func.count().over(order_by=DailyBiometrics.date, rows=(-BASELINE_DAYS, -1)).label("baseline_days"),
         )

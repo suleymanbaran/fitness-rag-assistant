@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import DailyBiometrics
 
-METRIC_FIELDS = ("hrv_ms", "sleep_score", "resting_hr_bpm", "calories_kcal")
+METRIC_FIELDS = ("hrv_ms", "sleep_score", "sleep_minutes", "resting_hr_bpm", "calories_kcal")
 
 
 def upsert_daily_metrics(db: Session, user_id: str, day: date, source: str, **metrics: Any) -> None:
