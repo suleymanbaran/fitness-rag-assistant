@@ -6,8 +6,13 @@ advice, grounded in vetted recovery and nutrition protocols and citing every sou
 **Stack:** Python, FastAPI, PostgreSQL (SQLAlchemy, Alembic), Qdrant, OpenAI (`text-embedding-3-small`,
 `gpt-4o-mini`), Streamlit, Docker, Caddy.
 
-<!-- Add a screenshot of the chat answering a question: docs/screenshot.png
-![Chat UI](docs/screenshot.png) -->
+![Dashboard: daily HRV, sleep, resting heart rate, calories, and the Google Health and FatSecret connect buttons](docs/dashboard.png)
+
+![Coach answer to "Should I run today?", citing the protocols it used](docs/chat.png)
+
+These screenshots are the seeded demo profile. Google Health is in Testing mode, so only Google
+accounts on the project's test-user list can connect a Fitbit. Anyone can ask the coach questions
+and log days without connecting Google Health or FatSecret.
 
 ## What it does
 
@@ -17,6 +22,7 @@ advice, grounded in vetted recovery and nutrition protocols and citing every sou
   the model to answer only from them, cite them by ID, and flag medical red flags.
 - **Wearable and nutrition sync:** connects Fitbit data through the Google Health API (OAuth 2.0) and
   the FatSecret food diary (OAuth 1.0), with encrypted tokens, automatic refresh, retries and idempotent upserts.
+  Google Health only accepts accounts listed as test users while the app is unverified.
 - **Measured retrieval:** a labeled question set scores search with hit rate, recall and MRR at k.
 - **Production basics:** per-user token auth with object-level access checks, rate limiting on the
   LLM endpoint, upstream timeouts, request IDs in logs (no health data), Docker deployment behind HTTPS.
@@ -138,6 +144,12 @@ Fitbit does not have its own API anymore. Its data is read through the
 [Google Health API](https://developers.google.com/health), the successor of the Fitbit Web API.
 Calories come from the [FatSecret Platform API](https://platform.fatsecret.com).
 Typing a day still works, and a later sync only overwrites the fields that provider owns.
+
+**Who can connect.** The Google Cloud app stays in Testing. Only Google accounts added under
+**Google Auth Platform → Audience → Test users** can approve Fitbit access (up to 100 accounts).
+Those health scopes stay limited to that list until Google verifies the app. A reviewer who is not
+on the list uses the demo profile instead. FatSecret has no test-user list: whoever approves the
+app on fatsecret.com can sync a diary, once the project's consumer key is configured.
 
 | | Google Health API | FatSecret Platform API |
 |---|---|---|
