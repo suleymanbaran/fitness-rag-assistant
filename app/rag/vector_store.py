@@ -4,7 +4,14 @@ from dataclasses import dataclass
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, FieldCondition, Filter, MatchValue, PointStruct, VectorParams
 
+from app.config import Settings
 from app.data_access.protocols import Protocol
+
+
+def connect_qdrant(settings: Settings) -> QdrantClient:
+    if settings.qdrant_url:
+        return QdrantClient(url=settings.qdrant_url)
+    return QdrantClient(path=settings.qdrant_path)
 
 
 @dataclass(frozen=True)

@@ -4,15 +4,17 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException, Request
 from openai import OpenAI
 from qdrant_client import QdrantClient
+from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.data_access.users import UserProfile, get_user, list_users
+from app.db.session import get_db
 from app.rag.demo import HashingEmbedder, PromptEchoGenerator
 from app.rag.embeddings import Embedder
 from app.rag.generator import Generator
 from app.rag.ingestion import ingest_protocols
 from app.rag.prompt import build_messages
-from app.rag.vector_store import ProtocolStore
+from app.rag.vector_store import ProtocolStore, connect_qdrant
 from app.schemas import AskRequest, AskResponse, Source, UserSummary
 
 
@@ -32,7 +34,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 "OPENAI_API_KEY is not set. Add it to .env, or set DEMO_MODE=true to run offline."
             )
         openai_client = OpenAI(api_key=settings.openai_api_key)
-        qdrant_client = QdrantClient(path=settings.qdrant_path)
+        qdrant_client = connect_qdrant(settings)
         app.state.embedder = Embedder(openai_client, settings.embedding_model)
         app.state.generator = Generator(openai_client, settings.chat_model)
         app.state.store = ProtocolStore(qdrant_client, settings.qdrant_collection)
@@ -62,13 +64,13 @@ def health() -> dict[str, str]:
 
 
 @app.get("/users", response_model=list[UserSummary])
-def users() -> list[UserProfile]:
-    return list_users()
+def users(db: Session = Depends(get_db)) -> list[UserSummary]:
+    return [UserSummary(user_id=u.id, name=u.name, goal=u.goal) for u in list_users(db)]
 
 
 @app.get("/users/{user_id}", response_model=UserProfile)
-def user_detail(user_id: str) -> UserProfile:
-    user = get_user(user_id)
+def user_detail(user_id: str, db: Session = Depends(get_db)) -> UserProfile:
+    user = get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     return user
@@ -77,12 +79,13 @@ def user_detail(user_id: str) -> UserProfile:
 @app.post("/ask", response_model=AskResponse)
 def ask(
     payload: AskRequest,
+    db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
     embedder: Embedder = Depends(get_embedder),
     store: ProtocolStore = Depends(get_store),
     generator: Generator = Depends(get_generator),
 ) -> AskResponse:
-    user = get_user(payload.user_id)
+    user = get_user(db, payload.user_id)
     if user is None:
         raise HTTPException(status_code=404, detail=f"User {payload.user_id} not found")
     if not store.is_ready():

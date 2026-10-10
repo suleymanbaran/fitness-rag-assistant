@@ -1,5 +1,3 @@
-from statistics import mean
-
 from app.data_access.users import DailyMetrics, UserProfile
 from app.rag.vector_store import RetrievedChunk
 
@@ -13,11 +11,6 @@ Rules:
 - Never diagnose medical conditions. If the user mentions chest pain, fainting, an irregular
   heartbeat or similar red flags, tell them to stop training and contact a doctor.
 - Be concise and specific: give concrete changes to sets, intensity, exercises, food or sleep."""
-
-
-def _avg(values: list[float | int | None]) -> float | None:
-    present = [v for v in values if v is not None]
-    return mean(present) if present else None
 
 
 def _fmt(value: float | int | None, unit: str = "") -> str:
@@ -37,10 +30,10 @@ def format_user_context(user: UserProfile) -> str:
     if not days:
         return f"User: {user.name}, goal: {user.goal}. No daily metrics on file."
 
-    today, previous = days[-1], days[:-1]
-    hrv_base = _avg([d.hrv_ms for d in previous])
-    rhr_base = _avg([d.resting_hr_bpm for d in previous])
-    sleep_base = _avg([d.sleep_score for d in previous])
+    today = days[-1]
+    hrv_base = today.hrv_baseline_ms
+    rhr_base = today.resting_hr_baseline_bpm
+    sleep_base = today.sleep_baseline
 
     def day_line(d: DailyMetrics) -> str:
         return (
@@ -49,8 +42,8 @@ def format_user_context(user: UserProfile) -> str:
         )
 
     lines = [
-        f"User: {user.name}, {user.age} years, {user.weight_kg:.1f} kg, goal: {user.goal}",
-        f"Today ({today.date}) compared with the previous {len(previous)}-day baseline:",
+        f"User: {user.name}, {_fmt(user.age, ' years')}, {_fmt(user.weight_kg, ' kg')}, goal: {user.goal}",
+        f"Today ({today.date}) compared with the previous {today.baseline_days}-day baseline:",
         f"  HRV {_fmt(today.hrv_ms, ' ms')} vs {_fmt(hrv_base, ' ms')} ({_pct_change(today.hrv_ms, hrv_base)})",
         f"  Resting HR {_fmt(today.resting_hr_bpm, ' bpm')} vs {_fmt(rhr_base, ' bpm')}",
         f"  Sleep score {_fmt(today.sleep_score)} vs {_fmt(sleep_base)}",

@@ -7,12 +7,11 @@ Stop the API server first: embedded Qdrant allows only one process to open the d
 import argparse
 
 from openai import OpenAI
-from qdrant_client import QdrantClient
 
 from app.config import get_settings
 from app.rag.embeddings import Embedder
 from app.rag.ingestion import ingest_protocols
-from app.rag.vector_store import ProtocolStore
+from app.rag.vector_store import ProtocolStore, connect_qdrant
 
 
 def main() -> None:
@@ -23,7 +22,7 @@ def main() -> None:
 
     settings = get_settings()
     embedder = Embedder(OpenAI(api_key=settings.openai_api_key), settings.embedding_model)
-    client = QdrantClient(path=settings.qdrant_path)
+    client = connect_qdrant(settings)
     store = ProtocolStore(client, settings.qdrant_collection)
 
     try:
