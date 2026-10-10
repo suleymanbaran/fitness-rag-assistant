@@ -43,10 +43,18 @@ flowchart LR
   a future wearable sync updates the day instead of duplicating it, and only overwrites the fields sent.
 - **Evaluation before tuning.** Chunking and top-k stay unchanged until the eval says retrieval is weak.
 
-<!-- Fill in after: python -m scripts.eval_retrieval
 ## Results
 
-Retrieval on 26 labeled questions (OpenAI embeddings): hit rate X at k=3, MRR Y. -->
+Retrieval on 26 labeled questions over 12 protocols (`python -m scripts.eval_retrieval`):
+
+| Embeddings | Hit rate @1 | Hit rate @3 | Recall @3 | MRR |
+|---|---|---|---|---|
+| OpenAI `text-embedding-3-small` | 0.88 | 1.00 | 0.99 | 0.94 |
+| Word-hashing baseline (offline) | 0.38 | 0.81 | 0.78 | 0.57 |
+
+Semantic embeddings find the right protocol for questions that share no keywords with it
+(for example "almost passed out at rest" retrieves the medical red-flags protocol).
+The knowledge base is small, so these numbers show the method works; they will drop as protocols grow.
 
 ## Project layout
 
@@ -126,7 +134,7 @@ python -m scripts.eval_retrieval --demo     # offline hashing embedder, for comp
 
 It prints hit rate, recall and MRR at k = 1, 3, 5, plus every question missed at `RAG_TOP_K`.
 Run it before and after changing protocols, chunking, top-k or the embedding model; change those
-only when the score says retrieval is weak. Offline baseline (hashing embedder): hit rate 0.81 at k=3.
+only when the score says retrieval is weak. Current scores are in [Results](#results).
 
 ## Going live (only when you need it off this machine)
 
