@@ -1,0 +1,74 @@
+[
+  {
+    "id": "rec-hrv-autoregulation",
+    "title": "HRV-guided training autoregulation",
+    "category": "recovery",
+    "text": "Compare today's HRV with the athlete's 7-day rolling average. A drop of more than 10% below baseline signals incomplete recovery: lower planned session intensity by 1-2 RPE points, or replace heavy compound lifts with technique work at 60-70% of 1RM. If HRV is more than 20% below baseline, or stays low for 3 or more days, take a rest day or do only light Zone 2 cardio."
+  },
+  {
+    "id": "rec-cns-fatigue-legs",
+    "title": "Managing nervous-system fatigue on heavy leg days",
+    "category": "training",
+    "text": "Signs of nervous-system (CNS) fatigue include elevated resting heart rate, poor sleep, reduced grip strength and a feeling of heaviness during warm-ups. On a planned heavy lower-body day, cut working sets by 30-40%, cap intensity at RPE 7, and replace back squats with goblet squats or leg presses, which need less coordination and spinal loading. Keep accessory work and stop sets two reps before failure."
+  },
+  {
+    "id": "rec-resting-hr",
+    "title": "Elevated resting heart rate as a fatigue marker",
+    "category": "recovery",
+    "text": "A morning resting heart rate 5 or more beats per minute above the weekly average often indicates accumulated fatigue, dehydration, illness or alcohol intake. Combine it with HRV and sleep data before changing training. One high reading alone is noise; two consecutive days alongside low HRV justify a lighter session."
+  },
+  {
+    "id": "rec-zone2",
+    "title": "Zone 2 cardio for active recovery",
+    "category": "recovery",
+    "text": "Zone 2 is steady aerobic work at roughly 60-70% of maximum heart rate, at a pace where you can still hold a conversation. Twenty to forty minutes of cycling, brisk walking or rowing increases blood flow and supports recovery without adding meaningful fatigue. It is the default replacement for intense training on low-readiness days."
+  },
+  {
+    "id": "rec-deload-week",
+    "title": "Planning a deload week",
+    "category": "training",
+    "text": "After 4-8 weeks of hard training, or when performance stalls together with persistently low HRV and poor sleep, schedule a deload week. Keep exercise selection and intensity similar but reduce total volume by 40-50%, for example by halving the number of sets. Strength is maintained while connective tissue and the nervous system recover."
+  },
+  {
+    "id": "sleep-debt",
+    "title": "Training after a poor night's sleep",
+    "category": "sleep",
+    "text": "After a night with a sleep score below 60 or under 6 hours of sleep, maximal strength and reaction time drop and injury risk rises. Keep the session but avoid new personal-record attempts, reduce top-set intensity by about 5-10%, and extend the warm-up. A 20-minute nap before 3 pm can partially restore alertness."
+  },
+  {
+    "id": "sleep-hygiene",
+    "title": "Sleep hygiene for better recovery",
+    "category": "sleep",
+    "text": "Aim for 7-9 hours in bed at consistent times. Keep the bedroom dark and cool (around 18 degrees Celsius), avoid caffeine within 8 hours of bedtime and large meals within 2-3 hours, and limit bright screens in the last hour. Consistent wake-up times matter more than occasional long lie-ins."
+  },
+  {
+    "id": "nut-protein",
+    "title": "Daily protein targets for strength training",
+    "category": "nutrition",
+    "text": "Strength-training adults benefit from 1.6-2.2 grams of protein per kilogram of body weight per day, split over 3-5 meals with roughly 0.4 g/kg each. During a calorie deficit, stay toward the upper end of the range to preserve muscle mass. Good sources include eggs, dairy, fish, poultry, legumes and tofu."
+  },
+  {
+    "id": "nut-calorie-deficit",
+    "title": "Training in a calorie deficit",
+    "category": "nutrition",
+    "text": "A moderate deficit of about 300-500 kcal per day (roughly 0.5-1% of body weight lost per week) preserves performance and muscle. Larger deficits lower HRV, worsen sleep and increase fatigue. When intake drops sharply below maintenance, reduce training volume before reducing intensity, and keep protein high."
+  },
+  {
+    "id": "nut-carbs-recovery",
+    "title": "Carbohydrates around hard sessions",
+    "category": "nutrition",
+    "text": "Carbohydrates replenish muscle glycogen used during intense training. On heavy days, eat 1-2 grams of carbohydrate per kilogram of body weight in the 2-4 hours before training, and include carbohydrates with protein in the meal after. Persistent low-carbohydrate intake combined with high training volume is a common cause of flat sessions."
+  },
+  {
+    "id": "nut-hydration",
+    "title": "Hydration and electrolytes",
+    "category": "nutrition",
+    "text": "Even 2% dehydration reduces strength and endurance and can raise resting heart rate. Drink about 30-35 ml of water per kilogram of body weight per day, more in hot weather or long sessions. Pale yellow urine is a practical target. Add sodium for sessions longer than 60 minutes or when sweating heavily."
+  },
+  {
+    "id": "safety-red-flags",
+    "title": "Red flags that require medical attention",
+    "category": "safety",
+    "text": "Stop training and seek medical care for chest pain or pressure, fainting or near-fainting, irregular or racing heartbeat at rest, unusual shortness of breath, or sudden severe headache. A coaching app must not diagnose these symptoms; it should advise contacting a doctor or emergency services."
+  }
+]

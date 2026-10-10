@@ -1,0 +1,81 @@
+# Production stack: only Caddy is reachable from outside, and it serves the UI over HTTPS.
+# Usage: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql+psycopg://coach:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}@postgres:5432/fitness_coach
+  QDRANT_URL: http://qdrant:6333
+  AUTH_ENABLED: "true"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: coach
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: fitness_coach
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coach -d fitness_coach"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.4
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  # Runs once per deploy: schema migrations, then re-embeds data/protocols.json into Qdrant.
+  setup:
+    build: .
+    env_file: .env.prod
+    environment: *app-env
+    command: ["sh", "-c", "alembic upgrade head && python -m scripts.ingest"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    restart: "no"
+
+  api:
+    build: .
+    env_file: .env.prod
+    environment: *app-env
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  ui:
+    build: .
+    environment:
+      API_URL: http://api:8000
+    command: ["streamlit", "run", "ui/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501",
+              "--server.headless=true", "--browser.gatherUsageStats=false"]
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env.prod}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - ui
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  caddy_data:
+  caddy_config:

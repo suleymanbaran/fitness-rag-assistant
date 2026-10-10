@@ -1,0 +1,34 @@
+[
+  {
+    "user_id": "u1",
+    "name": "Ali",
+    "age": 27,
+    "weight_kg": 82.0,
+    "goal": "strength",
+    "days": [
+      {"date": "2026-10-03", "hrv_ms": 68, "sleep_score": 82, "resting_hr_bpm": 54, "calories_kcal": 2900},
+      {"date": "2026-10-04", "hrv_ms": 71, "sleep_score": 85, "resting_hr_bpm": 53, "calories_kcal": 3000},
+      {"date": "2026-10-05", "hrv_ms": 66, "sleep_score": 78, "resting_hr_bpm": 55, "calories_kcal": 2850},
+      {"date": "2026-10-06", "hrv_ms": 69, "sleep_score": 80, "resting_hr_bpm": 54, "calories_kcal": 2950},
+      {"date": "2026-10-07", "hrv_ms": 64, "sleep_score": 74, "resting_hr_bpm": 56, "calories_kcal": 2700},
+      {"date": "2026-10-08", "hrv_ms": 61, "sleep_score": 66, "resting_hr_bpm": 58, "calories_kcal": 2600},
+      {"date": "2026-10-09", "hrv_ms": 55, "sleep_score": 58, "resting_hr_bpm": 60, "calories_kcal": 2500}
+    ]
+  },
+  {
+    "user_id": "u2",
+    "name": "Elif",
+    "age": 31,
+    "weight_kg": 64.0,
+    "goal": "fat_loss",
+    "days": [
+      {"date": "2026-10-03", "hrv_ms": 52, "sleep_score": 84, "resting_hr_bpm": 58, "calories_kcal": 1750},
+      {"date": "2026-10-04", "hrv_ms": 54, "sleep_score": 86, "resting_hr_bpm": 57, "calories_kcal": 1700},
+      {"date": "2026-10-05", "hrv_ms": 53, "sleep_score": 83, "resting_hr_bpm": 58, "calories_kcal": 1600},
+      {"date": "2026-10-06", "hrv_ms": 55, "sleep_score": 88, "resting_hr_bpm": 56, "calories_kcal": 1450},
+      {"date": "2026-10-07", "hrv_ms": 51, "sleep_score": 81, "resting_hr_bpm": 58, "calories_kcal": 1300},
+      {"date": "2026-10-08", "hrv_ms": 50, "sleep_score": 79, "resting_hr_bpm": 59, "calories_kcal": 1250},
+      {"date": "2026-10-09", "hrv_ms": 52, "sleep_score": 82, "resting_hr_bpm": 58, "calories_kcal": 1200}
+    ]
+  }
+]

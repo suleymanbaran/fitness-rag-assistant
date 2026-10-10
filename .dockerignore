@@ -1,0 +1,11 @@
+.git
+.venv
+.env
+.env.*
+!.env.example
+.pytest_cache
+__pycache__
+*.py[cod]
+qdrant_data
+docs
+tests
