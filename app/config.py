@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     ask_rate_limit_per_minute: int = 20
     openai_timeout_seconds: float = 30.0
 
+    # Integrations. Each provider is enabled only when its credentials are set.
+    # TOKEN_ENCRYPTION_KEY encrypts stored OAuth tokens; generate with scripts/generate_key.py.
+    token_encryption_key: str = ""
+    public_api_url: str = "http://localhost:8000"
+    ui_url: str = "http://localhost:8501"
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    fatsecret_consumer_key: str = ""
+    fatsecret_consumer_secret: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

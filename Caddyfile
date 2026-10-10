@@ -2,5 +2,14 @@
 # (the domain's DNS must point at this server, with ports 80 and 443 open).
 {$DOMAIN} {
 	encode gzip
-	reverse_proxy ui:8501
+
+	# Google and FatSecret send the browser back here after the user approves access.
+	# Only these callbacks reach the API from outside; everything else goes to the UI.
+	handle /integrations/*/callback {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy ui:8501
+	}
 }

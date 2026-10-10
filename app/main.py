@@ -16,6 +16,7 @@ from app.data_access.biometrics import upsert_daily_metrics
 from app.data_access.users import DailyMetrics, UserProfile, get_user, get_user_days, list_users, upsert_user
 from app.db.models import User
 from app.db.session import get_db
+from app.integrations.routes import router as integrations_router
 from app.rag.demo import HashingEmbedder, PromptEchoGenerator
 from app.rag.embeddings import Embedder
 from app.rag.generator import Generator
@@ -63,7 +64,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     qdrant_client.close()
 
 
-app = FastAPI(title="Fitness RAG Coach", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Fitness RAG Coach", version="0.3.0", lifespan=lifespan)
+app.include_router(integrations_router)
 
 
 @app.middleware("http")

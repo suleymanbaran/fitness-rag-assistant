@@ -15,6 +15,8 @@ advice, grounded in vetted recovery and nutrition protocols and citing every sou
   with window functions, and puts the exact numbers in the prompt.
 - **Grounded answers:** retrieves the most relevant protocols from a vector database and instructs
   the model to answer only from them, cite them by ID, and flag medical red flags.
+- **Wearable and nutrition sync:** connects Fitbit data through the Google Health API (OAuth 2.0) and
+  the FatSecret food diary (OAuth 1.0), with encrypted tokens, automatic refresh, retries and idempotent upserts.
 - **Measured retrieval:** a labeled question set scores search with hit rate, recall and MRR at k.
 - **Production basics:** per-user token auth with object-level access checks, rate limiting on the
   LLM endpoint, upstream timeouts, request IDs in logs (no health data), Docker deployment behind HTTPS.
@@ -71,6 +73,7 @@ The knowledge base is small, so these numbers show the method works; they will d
 | `app/rag/generator.py` | Chat completion call |
 | `app/rag/demo.py` | Offline stand-ins for OpenAI (demo mode and tests) |
 | `app/main.py` | FastAPI app: `POST /ask`, `/users` endpoints |
+| `app/integrations/` | Google Health and FatSecret clients, OAuth flows, token encryption, sync |
 | `ui/streamlit_app.py` | Chat UI with metrics and charts; calls the API over HTTP |
 | `migrations/` | Alembic schema migrations |
 | `scripts/ingest.py` | Embed protocols and load them into Qdrant |
@@ -122,6 +125,43 @@ curl -X PUT localhost:8000/users/me -H 'Content-Type: application/json' \
 curl -X PUT localhost:8000/users/me/days/2026-10-10 -H 'Content-Type: application/json' \
   -d '{"hrv_ms": 58, "sleep_score": 71, "resting_hr_bpm": 56}'
 ```
+
+## Connect your data (Fitbit via Google Health, FatSecret)
+
+Instead of typing numbers, the coach can pull them:
+
+| Provider | Data | Login |
+|---|---|---|
+| [Google Health API](https://developers.google.com/health) (Fitbit, Pixel Watch) | Daily HRV, daily resting heart rate, minutes asleep in the main sleep | OAuth 2.0 with refresh tokens |
+| [FatSecret Platform](https://platform.fatsecret.com) | Total calories per day from your food diary | 3-legged OAuth 1.0 |
+
+Tokens are encrypted at rest with `TOKEN_ENCRYPTION_KEY`. Syncing is idempotent: each provider only
+overwrites its own fields, and days with no diary entries are skipped rather than stored as 0 kcal.
+
+**1. Encryption key.** Run `python -m scripts.generate_key` and put the output in `.env` as `TOKEN_ENCRYPTION_KEY`.
+
+**2. Google Health (about 10 minutes).** In the [Google Cloud console](https://console.cloud.google.com):
+
+1. Create a project, then enable the **Google Health API** under APIs & Services, Library.
+2. Configure the OAuth consent screen: user type External, app in Testing mode. Under test users, add the
+   Google account your Fitbit is linked to. Add the scopes
+   `googlehealth.health_metrics_and_measurements.readonly` and `googlehealth.sleep.readonly`.
+3. Create an OAuth client of type **Web application** with the authorized redirect URI
+   `http://localhost:8000/integrations/google/callback`.
+4. Put the client ID and secret in `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+If the console looks different, follow Google's [Get started guide](https://developers.google.com/health).
+Apps in Testing mode get refresh tokens that expire after 7 days, so expect to press Connect again weekly
+until the app is verified; the UI shows "Connect Google Health again" when that happens.
+
+**3. FatSecret.** Register at [platform.fatsecret.com](https://platform.fatsecret.com), copy the OAuth 1.0
+**Consumer Key** and **Consumer Secret** into `.env` as `FATSECRET_CONSUMER_KEY` and `FATSECRET_CONSUMER_SECRET`.
+FatSecret may require your public IP address in the app's allowed IPs. Reading the food diary may need
+FatSecret's Premier tier; if so, sync shows the FatSecret error message instead of calories.
+
+**4. Connect.** Restart the API, open the UI, and in the sidebar open **Connected apps**: press Connect,
+approve access on the provider's page, then press **Sync now** (pulls the last 14 days).
+To sync on a schedule, run `python -m scripts.sync` from cron; the production stack does it every 3 hours.
 
 ## Check retrieval quality
 

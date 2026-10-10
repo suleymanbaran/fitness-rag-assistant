@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -37,6 +38,7 @@ class DayMetricsIn(BaseModel):
 
     hrv_ms: float | None = Field(None, gt=0, lt=400)
     sleep_score: int | None = Field(None, ge=0, le=100)
+    sleep_minutes: int | None = Field(None, ge=0, le=1440)
     resting_hr_bpm: int | None = Field(None, ge=20, le=250)
     calories_kcal: int | None = Field(None, ge=0, le=20000)
 
@@ -45,6 +47,25 @@ class DayMetricsIn(BaseModel):
         if all(v is None for v in self.model_dump().values()):
             raise ValueError("Send at least one metric")
         return self
+
+
+class IntegrationStatus(BaseModel):
+    provider: str
+    configured: bool
+    connected: bool
+    last_synced_at: datetime | None = None
+    last_error: str | None = None
+
+
+class ConnectResponse(BaseModel):
+    authorization_url: str
+
+
+class SyncResultOut(BaseModel):
+    provider: str
+    days_updated: int
+    error: str | None = None
+    reconnect: bool = False
 
 
 class Source(BaseModel):
