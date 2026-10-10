@@ -1,14 +1,54 @@
 # Fitness RAG Coach
 
-A RAG-based AI fitness coach, built phase by phase as a learning project.
-`reference/` holds an earlier generated scaffold kept for comparison only.
+An AI fitness coach that turns your daily HRV, sleep and resting heart rate into concrete training
+advice, grounded in vetted recovery and nutrition protocols and citing every source it uses.
+
+**Stack:** Python, FastAPI, PostgreSQL (SQLAlchemy, Alembic), Qdrant, OpenAI (`text-embedding-3-small`,
+`gpt-4o-mini`), Streamlit, Docker, Caddy.
+
+<!-- Add a screenshot of the chat answering a question: docs/screenshot.png
+![Chat UI](docs/screenshot.png) -->
+
+## What it does
+
+- **Personal context:** compares today's metrics with your rolling 7-day baseline, computed in SQL
+  with window functions, and puts the exact numbers in the prompt.
+- **Grounded answers:** retrieves the most relevant protocols from a vector database and instructs
+  the model to answer only from them, cite them by ID, and flag medical red flags.
+- **Measured retrieval:** a labeled question set scores search with hit rate, recall and MRR at k.
+- **Production basics:** per-user token auth with object-level access checks, rate limiting on the
+  LLM endpoint, upstream timeouts, request IDs in logs (no health data), Docker deployment behind HTTPS.
+- **Runs offline:** demo mode and the test suite need no API key.
 
 ## How it works
 
-```text
-question ─► embed ─► Qdrant top-k protocols ─────────────────┐
-user_id ──► Postgres: profile + daily metrics + SQL baselines ┼─► prompt ─► gpt-4o-mini ─► answer + sources
+```mermaid
+flowchart LR
+  question[Question] --> embed[Embed]
+  embed --> qdrant["Qdrant: top-k protocols"]
+  userId[user_id] --> postgres["Postgres: profile, daily metrics, 7-day baselines"]
+  qdrant --> prompt[Prompt]
+  postgres --> prompt
+  prompt --> llm[gpt-4o-mini]
+  llm --> answer["Answer + cited sources"]
 ```
+
+## Design decisions
+
+- **Two stores for two kinds of data.** Protocols are unstructured text, searched by meaning in Qdrant.
+  Biometrics are exact numbers, queried in Postgres. Similarity search would blur the numbers.
+- **RAG instead of fine-tuning.** Metrics change daily and advice must trace back to a source.
+  Updating knowledge means re-embedding a document, not retraining a model.
+- **Idempotent daily upserts.** One row per user per day with a unique constraint, so re-logging or
+  a future wearable sync updates the day instead of duplicating it, and only overwrites the fields sent.
+- **Evaluation before tuning.** Chunking and top-k stay unchanged until the eval says retrieval is weak.
+
+<!-- Fill in after: python -m scripts.eval_retrieval
+## Results
+
+Retrieval on 26 labeled questions (OpenAI embeddings): hit rate X at k=3, MRR Y. -->
+
+## Project layout
 
 | Path | Role |
 |---|---|

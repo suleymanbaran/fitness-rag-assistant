@@ -8,5 +8,4 @@ __pycache__
 *.py[cod]
 qdrant_data
 docs
-reference
 tests
